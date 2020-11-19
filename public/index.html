@@ -1,0 +1,86 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    </head>
+    <body>
+        <div id="app" class="container">
+            Your unique endpoint is {{ serverId }}
+            <ul class="list-group">
+                <li v-for="request in requests" class="list-group-item">
+                    <table class="table">
+                        <tr>
+                            <td>url</td>
+                            <td>{{ request.url }}</td>
+                        </tr>
+                        <tr>
+                            <td>method</td>
+                            <td>{{ request.method }}</td>
+                        </tr>
+                        <tr>
+                            <td>headers</td>
+                            <td>{{ request.headers }}</td>
+                        </tr>
+                        <tr>
+                            <td>params</td>
+                            <td>{{ request.params }}</td>
+                        </tr>
+                        <tr>
+                            <td>body</td>
+                            <td>{{ request.body }}</td>
+                        </tr>
+                        <tr>
+                            <td>response status code</td>
+                            <td>
+                                <input v-model="request.responseStatusCode"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>response json</td>
+                            <td>
+                                <input v-model="request.responseJson"/>
+                            </td>
+                        </tr>
+                        <td>
+                            <td>
+                                <button @click="sendResponse(request.requestKey, request.responseStatusCode, request.responseJson)">send response</button>
+                            </td>
+                        </td>
+                    </table>
+                </li>
+            </ul>
+        </div>
+    </body>
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                serverId: '',
+                requests: []
+            },
+            methods: {
+                sendResponse: function(requestKey, statusCode, json) {
+                    ws.send(JSON.stringify({
+                        requestKey: requestKey, 
+                        statusCode: statusCode, 
+                        json: json
+                    }));
+                }
+            }
+        });
+
+        const ws = new WebSocket("ws://localhost:8080/");
+        ws.onmessage = function (event) {
+            console.log(app);
+            const message = JSON.parse(event.data);
+            if (message.requestKey) {
+                const request = message;
+                request.responseStatusCode = 200;
+                request.responseJson = '{}';
+                app.requests.push(request);
+            } else {
+                app.serverId = message.serverId;
+            }
+        }
+    </script>
+</html>
