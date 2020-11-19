@@ -2,11 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const PORT = process.env.PORT || 5000;
 // lib/app.ts
+var http = require("http");
 var express = require("express");
 var WebSocket = require("ws");
 // Create a new express application instance
 var app = express();
-var wss = new WebSocket.Server({ port: 8080 });
+var server = http.createServer(app);
+var wss = new WebSocket.Server({server: server});
 wss.on('connection', function (ws) {
     var serverId = Math.random().toString(36).substring(7);
     var requests = {};
@@ -32,6 +34,6 @@ wss.on('connection', function (ws) {
 app.use('/', express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded());
-app.listen(PORT, function () {
+server.listen(PORT, function () {
     console.log(`Example app listening on port ${ PORT }!`);
 });
