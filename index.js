@@ -10,7 +10,7 @@ var app = express();
 var server = http.createServer(app);
 var wss = new WebSocket.Server({ server: server });
 wss.on('connection', function (ws) {
-    var serverId = Math.random().toString(36).substring(7);
+    var serverId = makeid(16);
     var requests = {};
     var lastRequestKey = 0;
     var endpointData = { serverId: serverId };
@@ -31,6 +31,14 @@ wss.on('connection', function (ws) {
         ws.send(JSON.stringify(requestData));
     });
 });
+function makeid(length) {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
 app.use('/', express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded());

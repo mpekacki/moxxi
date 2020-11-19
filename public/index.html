@@ -5,7 +5,7 @@
     </head>
     <body>
         <div id="app" class="container">
-            Your unique endpoint is {{ serverId }}
+            Your unique endpoint is {{ serverUrl }}
             <ul class="list-group">
                 <li v-for="request in requests" class="list-group-item">
                     <table class="table">
@@ -59,6 +59,7 @@
             el: '#app',
             data: {
                 serverId: '',
+                serverUrl: '',
                 requests: []
             },
             methods: {
@@ -85,6 +86,7 @@
                 app.requests.push(request);
             } else {
                 app.serverId = message.serverId;
+                app.serverUrl = location.origin + '/' + message.serverId;
             }
         }
     </script>
