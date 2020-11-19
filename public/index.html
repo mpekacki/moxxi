@@ -31,19 +31,22 @@
                         </tr>
                         <tr>
                             <td>response status code</td>
-                            <td>
+                            <td v-if="request.responseSent">{{ request.responseStatusCode }}</td>
+                            <td v-else>
                                 <input v-model="request.responseStatusCode"/>
                             </td>
                         </tr>
                         <tr>
                             <td>response json</td>
-                            <td>
-                                <input v-model="request.responseJson"/>
+                            <td v-if="request.responseSent">{{ request.responseJson }}</td>
+                            <td v-else>
+                                <textarea v-model="request.responseJson"></textarea>
                             </td>
                         </tr>
                         <td>
-                            <td>
-                                <button @click="sendResponse(request.requestKey, request.responseStatusCode, request.responseJson)">send response</button>
+                            <td v-if="request.responseSent" class="text-success">response sent!</td>
+                            <td v-else>
+                                <button @click="sendResponse(request)">send response</button>
                             </td>
                         </td>
                     </table>
@@ -59,12 +62,13 @@
                 requests: []
             },
             methods: {
-                sendResponse: function(requestKey, statusCode, json) {
+                sendResponse: function(request) {
                     ws.send(JSON.stringify({
-                        requestKey: requestKey, 
-                        statusCode: statusCode, 
-                        json: json
+                        requestKey: request.requestKey, 
+                        statusCode: request.responseStatusCode, 
+                        json: request.responseJson
                     }));
+                    request.responseSent = true;
                 }
             }
         });
@@ -77,6 +81,7 @@
                 const request = message;
                 request.responseStatusCode = 200;
                 request.responseJson = '{}';
+                request.responseSent = false;
                 app.requests.push(request);
             } else {
                 app.serverId = message.serverId;

@@ -1,14 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const PORT = process.env.PORT || 5000;
 // lib/app.ts
-var http = require("http");
 var express = require("express");
 var WebSocket = require("ws");
+var http = require("http");
+var PORT = process.env.PORT || 5000;
 // Create a new express application instance
 var app = express();
 var server = http.createServer(app);
-var wss = new WebSocket.Server({server: server});
+var wss = new WebSocket.Server({ server: server });
 wss.on('connection', function (ws) {
     var serverId = Math.random().toString(36).substring(7);
     var requests = {};
@@ -17,12 +17,12 @@ wss.on('connection', function (ws) {
     ws.send(JSON.stringify(endpointData));
     ws.on('message', function (message) {
         var incomingResponse = JSON.parse(message);
-        if (incomingResponse.requestKey in requests) {
-            var res = requests[incomingResponse.requestKey];
-            if (!res.headersSent) {
-                res.status(incomingResponse.statusCode).json(JSON.parse(incomingResponse.json));
-            }
-        }
+        if (!(incomingResponse.requestKey in requests))
+            return;
+        var res = requests[incomingResponse.requestKey];
+        if (res.headersSent)
+            return;
+        res.status(incomingResponse.statusCode).json(JSON.parse(incomingResponse.json));
     });
     app.all('/' + serverId + '*', function (req, res) {
         requests[++lastRequestKey] = res;
@@ -35,5 +35,5 @@ app.use('/', express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded());
 server.listen(PORT, function () {
-    console.log(`Example app listening on port ${ PORT }!`);
+    console.log("App listening on port " + PORT + "!");
 });
