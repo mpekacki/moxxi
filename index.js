@@ -4,42 +4,62 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var express = require("express");
 var WebSocket = require("ws");
 var http = require("http");
+var uuid_1 = require("uuid");
+var cookieSession = require("cookie-session");
+var path = require("path");
+var Cookies = require("cookies");
 var PORT = process.env.PORT || 5000;
 // Create a new express application instance
 var app = express();
 var server = http.createServer(app);
 var wss = new WebSocket.Server({ server: server });
-wss.on('connection', function (ws) {
-    var serverId = makeid(16);
-    var requests = {};
-    var lastRequestKey = 0;
+var keys = [uuid_1.v4(), uuid_1.v4()];
+app.use(cookieSession({
+    name: 'session',
+    keys: keys
+}));
+var socketMap = {};
+wss.on('connection', function (ws, request) {
+    var cookies = new Cookies(request, new http.ServerResponse(request), keys);
+    var session = JSON.parse(Buffer.from(cookies.get('session') || '', 'base64').toString('utf8'));
+    var serverId = session.serverId;
+    var connection;
+    if (serverId in socketMap) {
+        socketMap[serverId].ws.terminate();
+        socketMap[serverId].ws = ws;
+        connection = socketMap[serverId];
+    }
+    else {
+        connection = { serverId: serverId, responseMap: {}, lastRequestKey: 0, ws: ws };
+        socketMap[serverId] = connection;
+    }
     var endpointData = { serverId: serverId };
     ws.send(JSON.stringify(endpointData));
     ws.on('message', function (message) {
         var incomingResponse = JSON.parse(message);
-        if (!(incomingResponse.requestKey in requests))
+        if (!(incomingResponse.requestKey in connection.responseMap))
             return;
-        var res = requests[incomingResponse.requestKey];
+        var res = connection.responseMap[incomingResponse.requestKey];
         if (res.headersSent)
             return;
         res.status(incomingResponse.statusCode).json(JSON.parse(incomingResponse.json));
     });
-    app.all('/' + serverId + '*', function (req, res) {
-        requests[++lastRequestKey] = res;
-        var requestData = { serverId: serverId, requestKey: lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body };
-        console.log(requestData);
-        ws.send(JSON.stringify(requestData));
-    });
 });
-function makeid(length) {
-    var result = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
+app.get('/', function (req, res) {
+    if (req.session && !req.session.serverId) {
+        req.session.serverId = uuid_1.v4();
+        var serverId_1 = req.session.serverId;
+        app.all('/' + serverId_1 + '*', function (req, res) {
+            if (!(serverId_1 in socketMap))
+                return;
+            var connection = socketMap[serverId_1];
+            connection.responseMap[++connection.lastRequestKey] = res;
+            var requestData = { serverId: serverId_1, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body };
+            connection.ws.send(JSON.stringify(requestData));
+        });
     }
-    return result;
-}
-app.use('/', express.static('public'));
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
+});
 app.use(express.json());
 app.use(express.urlencoded());
 server.listen(PORT, function () {
