@@ -44,6 +44,12 @@ wss.on('connection', function (ws, request) {
             return;
         res.status(incomingResponse.statusCode).json(JSON.parse(incomingResponse.json));
     });
+    ws.ping();
+    ws.on('pong', function () {
+        setTimeout(function () {
+            ws.ping();
+        }, 45000);
+    });
 });
 app.get('/', function (req, res) {
     if (req.session && !req.session.serverId) {

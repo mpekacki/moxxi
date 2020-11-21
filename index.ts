@@ -80,6 +80,13 @@ wss.on('connection', (ws, request) => {
     if (res.headersSent) return;
     res.status(incomingResponse.statusCode).json(JSON.parse(incomingResponse.json));
   });
+
+  ws.ping();
+  ws.on('pong', () => {
+      setTimeout(() => {
+          ws.ping();
+      }, 45000);
+  });
 });
 
 app.get('/', (req, res) => {
