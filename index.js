@@ -48,17 +48,18 @@ wss.on('connection', function (ws, request) {
 app.get('/', function (req, res) {
     if (req.session && !req.session.serverId) {
         req.session.serverId = uuid_1.v4();
-        var serverId_1 = req.session.serverId;
-        app.all('/' + serverId_1 + '*', function (req, res) {
-            if (!(serverId_1 in socketMap))
-                return;
-            var connection = socketMap[serverId_1];
-            connection.responseMap[++connection.lastRequestKey] = res;
-            var requestData = { serverId: serverId_1, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body };
-            connection.ws.send(JSON.stringify(requestData));
-        });
     }
-    res.sendFile(path.join(__dirname, '../public', 'index.html'));
+    res.sendFile(path.join(__dirname, './public', 'index.html'));
+});
+app.use('/public', express.static('public'));
+app.all('/:serverId*', function (req, res) {
+    var serverId = req.params.serverId;
+    if (!(serverId in socketMap))
+        return;
+    var connection = socketMap[serverId];
+    connection.responseMap[++connection.lastRequestKey] = res;
+    var requestData = { serverId: serverId, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body };
+    connection.ws.send(JSON.stringify(requestData));
 });
 app.use(express.json());
 app.use(express.urlencoded());
