@@ -52,7 +52,9 @@ interface RequestData {
   method: string,
   headers: object,
   params: object,
-  body: string
+  body: string,
+  ip: string,
+  protocol: string
 }
 
 const socketMap: ConnectionMap = {};
@@ -103,7 +105,7 @@ app.all('/:serverId*', (req, res) => {
   if (!(serverId in socketMap)) return;
   const connection = socketMap[serverId];
   connection.responseMap[++connection.lastRequestKey] = res;
-  const requestData: RequestData = { serverId: serverId, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body };
+  const requestData: RequestData = { serverId: serverId, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol };
   connection.ws.send(JSON.stringify(requestData));
 });
 

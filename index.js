@@ -64,7 +64,7 @@ app.all('/:serverId*', function (req, res) {
         return;
     var connection = socketMap[serverId];
     connection.responseMap[++connection.lastRequestKey] = res;
-    var requestData = { serverId: serverId, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body };
+    var requestData = { serverId: serverId, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol };
     connection.ws.send(JSON.stringify(requestData));
 });
 app.use(express.json());
