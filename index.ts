@@ -13,7 +13,7 @@ const app: express.Application = express();
 const server = http.createServer(app);
 const wss: WebSocket.Server = new WebSocket.Server({ server: server });
 
-const keys = [uuidv4(), uuidv4()];
+const keys = [process.env.KEY0 || uuidv4(), process.env.KEY1 || uuidv4()];
 
 app.use(cookieSession({
   name: 'session',

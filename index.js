@@ -13,7 +13,7 @@ var PORT = process.env.PORT || 5000;
 var app = express();
 var server = http.createServer(app);
 var wss = new WebSocket.Server({ server: server });
-var keys = [uuid_1.v4(), uuid_1.v4()];
+var keys = [process.env.KEY0 || uuid_1.v4(), process.env.KEY1 || uuid_1.v4()];
 app.use(cookieSession({
     name: 'session',
     keys: keys
