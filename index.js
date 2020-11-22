@@ -42,7 +42,14 @@ wss.on('connection', function (ws, request) {
         var res = connection.responseMap[incomingResponse.requestKey];
         if (res.headersSent)
             return;
-        res.status(incomingResponse.statusCode).json(JSON.parse(incomingResponse.json));
+        var contents;
+        try {
+            contents = JSON.parse(incomingResponse.json);
+        }
+        catch (_a) {
+            contents = incomingResponse.json;
+        }
+        res.status(incomingResponse.statusCode).send(contents);
     });
     ws.ping();
     ws.on('pong', function () {
@@ -63,9 +70,13 @@ app.all('/:serverId*', function (req, res) {
     if (!(serverId in socketMap))
         return;
     var connection = socketMap[serverId];
-    connection.responseMap[++connection.lastRequestKey] = res;
-    var requestData = { serverId: serverId, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol };
+    var requestKey = ++connection.lastRequestKey;
+    connection.responseMap[requestKey] = res;
+    var requestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol };
     connection.ws.send(JSON.stringify(requestData));
+    req.on('close', function () {
+        connection.ws.send('closed');
+    });
 });
 app.use(express.json());
 app.use(express.urlencoded());

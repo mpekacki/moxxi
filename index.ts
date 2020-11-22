@@ -80,7 +80,13 @@ wss.on('connection', (ws, request) => {
     if (!(incomingResponse.requestKey in connection.responseMap)) return;
     const res = connection.responseMap[incomingResponse.requestKey];
     if (res.headersSent) return;
-    res.status(incomingResponse.statusCode).json(JSON.parse(incomingResponse.json));
+    let contents;
+    try {
+        contents = JSON.parse(incomingResponse.json);
+    } catch {
+        contents = incomingResponse.json;
+    }
+    res.status(incomingResponse.statusCode).send(contents);
   });
 
   ws.ping();
@@ -104,9 +110,14 @@ app.all('/:serverId*', (req, res) => {
   const serverId = req.params.serverId;
   if (!(serverId in socketMap)) return;
   const connection = socketMap[serverId];
-  connection.responseMap[++connection.lastRequestKey] = res;
-  const requestData: RequestData = { serverId: serverId, requestKey: connection.lastRequestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol };
+  const requestKey = ++connection.lastRequestKey;
+  connection.responseMap[requestKey] = res;
+  const requestData: RequestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol };
   connection.ws.send(JSON.stringify(requestData));
+
+  req.on('close', () => {
+    connection.ws.send('closed');
+  })
 });
 
 app.use(express.json());

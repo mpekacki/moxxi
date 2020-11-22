@@ -39,7 +39,8 @@
 
 <body>
     <div id="app" class="container">
-        Your unique endpoint is <input v-model="serverUrl" readonly="true" onClick="this.select();" style="width: 100%"/>
+        Your unique endpoint is <input v-model="serverUrl" readonly="true" onClick="this.select();"
+            style="width: 100%" />
         <div v-if="!requests.length">
             <hr>
             Requests made to your endpoint will appear here
@@ -256,19 +257,21 @@
 
     const ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
     ws.onmessage = function (event) {
-        console.log(app);
-        const message = JSON.parse(event.data);
-        if (message.requestKey) {
-            const request = message;
-            request.responseStatusCode = 200;
-            request.responseJson = '{}';
-            request.responseSent = false;
-            request.headers = JSON.stringify(request.headers, null, 2);
-            app.requests.unshift(request);
-        } else {
-            app.serverId = message.serverId;
-            app.serverUrl = location.origin + '/' + message.serverId;
-        }
+        console.log(event);
+        try {
+            const message = JSON.parse(event.data);
+            if (message.requestKey) {
+                const request = message;
+                request.responseStatusCode = 200;
+                request.responseJson = '{}';
+                request.responseSent = false;
+                request.headers = JSON.stringify(request.headers, null, 2);
+                app.requests.unshift(request);
+            } else if (message.serverId) {
+                app.serverId = message.serverId;
+                app.serverUrl = location.origin + '/' + message.serverId;
+            }
+        } catch { }
     }
 </script>
 
