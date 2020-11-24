@@ -20,6 +20,10 @@ app.use(cookieSession({
   keys: keys
 }));
 
+app.use(express.json());
+app.use(express.urlencoded());
+app.use(express.text());
+
 interface Connection {
   serverId: string,
   responseMap: ResponseMap,
@@ -119,9 +123,6 @@ app.all('/:serverId*', (req, res) => {
     connection.ws.send('closed');
   })
 });
-
-app.use(express.json());
-app.use(express.urlencoded());
 
 server.listen(PORT, function () {
   console.log(`App listening on port ${PORT}!`);

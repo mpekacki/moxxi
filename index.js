@@ -18,6 +18,9 @@ app.use(cookieSession({
     name: 'session',
     keys: keys
 }));
+app.use(express.json());
+app.use(express.urlencoded());
+app.use(express.text());
 var socketMap = {};
 wss.on('connection', function (ws, request) {
     var cookies = new Cookies(request, new http.ServerResponse(request), keys);
@@ -78,8 +81,6 @@ app.all('/:serverId*', function (req, res) {
         connection.ws.send('closed');
     });
 });
-app.use(express.json());
-app.use(express.urlencoded());
 server.listen(PORT, function () {
     console.log("App listening on port " + PORT + "!");
 });
