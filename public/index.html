@@ -69,16 +69,10 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>params</td>
-                                <td>{{ request.params }}</td>
-                            </tr>
-                            <tr>
                                 <td>body</td>
-                                <td>{{ request.body }}</td>
-                            </tr>
-                            <tr>
-                                <td>ip</td>
-                                <td>{{ request.ip }}</td>
+                                <td>
+                                    <textarea readonly="true" v-model="request.body"></textarea>
+                                </td>
                             </tr>
                             <tr>
                                 <td>protocol</td>
@@ -360,6 +354,9 @@
             if (message.requestKey) {
                 const request = message;
                 request.headers = JSON.stringify(request.headers, null, 2);
+                try {
+                    request.body = JSON.stringify(request.body, null, 2);
+                } catch {}
                 const found = app.requests.find(r => r.requestKey === request.requestKey);
                 if (found) {
                     found = Object.assign(found, request);
