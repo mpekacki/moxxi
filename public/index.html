@@ -89,7 +89,7 @@
                 </tr>
                 <tr>
                     <td colspan="2">
-                        <table v-if="request.responseSent">
+                        <table v-if="request.status === 'ResponseSent'">
                             <tr>
                                 <th colspan="2">Response</th>
                             </tr>
@@ -102,8 +102,8 @@
                                 <td>{{ request.responseJson }}</td>
                             </tr>
                         </table>
-                        <response-editor v-else v-bind:status-code="request.responseStatusCode"
-                            v-bind:json="request.responseJson" v-bind:value="request"
+                        <response-editor v-else-if="request.status === 'Open'" v-bind:status-code="request.responseStatusCode"
+                            v-bind:json="request.responseJson"
                             v-bind:saved-responses="savedResponses"
                             v-on:jsoninput="request.responseJson = $event"
                             v-on:statuscodeinput="request.responseStatusCode = $event"></response-editor>
@@ -111,7 +111,8 @@
                 </tr>
                 <tr>
                     <td></td>
-                    <td v-if="request.responseSent" class="text-success">response sent!</td>
+                    <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
+                    <td v-else-if="request.status === 'Closed'">request closed by sender</td>
                     <td v-else>
                         <button @click="sendResponse(request)">send response</button>
                     </td>
@@ -143,7 +144,7 @@
                     statusCode: request.responseStatusCode,
                     json: request.responseJson
                 }));
-                request.responseSent = true;
+                request.status = 'ResponseSent';
                 this.saveResponse(request.responseStatusCode, request.responseJson);
             },
             saveResponse: function(statusCode, json) {
@@ -358,11 +359,15 @@
             const message = JSON.parse(event.data);
             if (message.requestKey) {
                 const request = message;
-                request.responseStatusCode = 200;
-                request.responseJson = '{}';
-                request.responseSent = false;
                 request.headers = JSON.stringify(request.headers, null, 2);
-                app.requests.unshift(request);
+                const found = app.requests.find(r => r.requestKey === request.requestKey);
+                if (found) {
+                    found = Object.assign(found, request);
+                } else {
+                    request.responseStatusCode = 200;
+                    request.responseJson = '{}';
+                    app.requests.unshift(request);
+                }
             } else if (message.serverId) {
                 app.serverId = message.serverId;
                 app.serverUrl = location.origin + '/' + message.serverId;

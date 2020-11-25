@@ -58,7 +58,8 @@ interface RequestData {
   params: object,
   body: string,
   ip: string,
-  protocol: string
+  protocol: string,
+  status: string
 }
 
 const socketMap: ConnectionMap = {};
@@ -116,12 +117,13 @@ app.all('/:serverId*', (req, res) => {
   const connection = socketMap[serverId];
   const requestKey = ++connection.lastRequestKey;
   connection.responseMap[requestKey] = res;
-  const requestData: RequestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol };
+  const requestData: RequestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol, status: 'Open' };
   connection.ws.send(JSON.stringify(requestData));
 
-  req.on('close', () => {
-    connection.ws.send('closed');
-  })
+  req.on('aborted', () => {
+    requestData.status = 'Closed';
+    connection.ws.send(JSON.stringify(requestData));
+  });
 });
 
 server.listen(PORT, function () {
