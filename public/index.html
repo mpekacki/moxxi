@@ -2,33 +2,9 @@
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"> -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
-        integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
-        crossorigin="anonymous" /> -->
-    <!-- CSS Reset -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css"> -->
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
-    <!-- <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css"> -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css" integrity="sha512-cG7Z4degp9718dDjGjeJmar0+g7RtE/olDe0VRKEFDtOEkm91JSvE7ZxN2+sijkU0AAK3e2xzu7bafBGC/uiqA==" crossorigin="anonymous" /> -->
-    <!-- <link rel="stylesheet" href="https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css" /> -->
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css"> -->
-
-    <!-- Google Fonts -->
-    <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic"> -->
-
-    <!-- CSS Reset -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css"> -->
-
-    <!-- Milligram CSS -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css"> -->
-
-    <!-- <link rel="stylesheet" href="/public/dark.css"> -->
-
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.1.3/jsoneditor.css" integrity="sha512-C4lyyyM6oEazFSIdZ4N8klIgD0frXwgcSh4hxlflXw8trQVlZ8M2etLv/TxupDhepsgjdLMbMfGmaB4UxnderA==" crossorigin="anonymous" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.1.3/jsoneditor.js" integrity="sha512-1UW+LVrkFHEx/ZjoEfXqnZGi73LPOdOnHqgT7eUj9SjE/sgjI97s/K/Fpwd4HCZfDIPWa2fXnzg1cfINuoOJ/w==" crossorigin="anonymous"></script> -->
 </head>
 
 <style>
@@ -38,71 +14,64 @@
 </style>
 
 <body>
-    <div id="app" class="container">
+    <div id="app">
         Your unique endpoint is <input v-model="serverUrl" readonly="true" onClick="this.select();"
             style="width: 100%" />
         <div v-if="!requests.length">
             <hr>
-            Requests made to your endpoint will appear here
+            Requests made to your endpoint will appear below
         </div>
-        <div v-for="request in requests" class="list-group-item">
+        <h3>Awaiting requests</h3>
+        <div v-if="!awaitingRequests.length">(empty)</div>
+        <div v-for="request in awaitingRequests">
             <hr>
             <table class="table">
                 <tr>
-                    <td colspan="2">
-                        <table>
-                            <tr>
-                                <th colspan="2">Request</th>
-                            </tr>
-                            <tr>
-                                <td>url</td>
-                                <td>{{ request.url }}</td>
-                            </tr>
-                            <tr>
-                                <td>method</td>
-                                <td>{{ request.method }}</td>
-                            </tr>
-                            <tr>
-                                <td>headers</td>
-                                <td>
-                                    <textarea readonly="true" v-model="request.headers"></textarea>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>body</td>
-                                <td>
-                                    <textarea readonly="true" v-model="request.body"></textarea>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>protocol</td>
-                                <td>{{ request.protocol }}</td>
-                            </tr>
-                        </table>
+                    <th colspan="2">Request</th>
+                </tr>
+                <tr>
+                    <td>url</td>
+                    <td>{{ request.url }}</td>
+                </tr>
+                <tr>
+                    <td>method</td>
+                    <td>{{ request.method }}</td>
+                </tr>
+                <tr>
+                    <td>headers</td>
+                    <td>
+                        <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2">
-                        <table v-if="request.status === 'ResponseSent'">
-                            <tr>
-                                <th colspan="2">Response</th>
-                            </tr>
-                            <tr>
-                                <td>response status code</td>
-                                <td>{{ request.responseStatusCode }}</td>
-                            </tr>
-                            <tr>
-                                <td>response json</td>
-                                <td>{{ request.responseJson }}</td>
-                            </tr>
-                        </table>
-                        <response-editor v-else-if="request.status === 'Open'" v-bind:status-code="request.responseStatusCode"
-                            v-bind:json="request.responseJson"
-                            v-bind:saved-responses="savedResponses"
-                            v-on:jsoninput="request.responseJson = $event"
-                            v-on:statuscodeinput="request.responseStatusCode = $event"></response-editor>
+                    <td>body</td>
+                    <td>
+                        <textarea readonly="true" v-model="request.body" rows="2"></textarea>
                     </td>
                 </tr>
+                <tr>
+                    <td>protocol</td>
+                    <td>{{ request.protocol }}</td>
+                </tr>
+            </table>
+            <table v-if="request.status === 'ResponseSent'">
+                <tr>
+                    <th colspan="2">Response</th>
+                </tr>
+                <tr>
+                    <td>response status code</td>
+                    <td>{{ request.responseStatusCode }}</td>
+                </tr>
+                <tr>
+                    <td>response json</td>
+                    <td>{{ request.responseJson }}</td>
+                </tr>
+            </table>
+            <response-editor v-else-if="request.status === 'Open'" v-bind:status-code="request.responseStatusCode"
+                v-bind:json="request.responseJson" v-bind:saved-responses="savedResponses"
+                v-on:jsoninput="request.responseJson = $event"
+                v-on:statuscodeinput="request.responseStatusCode = $event"></response-editor>
+            <table>
                 <tr>
                     <td></td>
                     <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
@@ -113,6 +82,62 @@
                 </tr>
             </table>
         </div>
+
+        <h3>Completed requests</h3>
+        <div v-if="!completedRequests.length">(empty)</div>
+        <div v-for="request in completedRequests">
+            <hr>
+            <table class="table">
+                <tr>
+                    <th colspan="2">Request</th>
+                </tr>
+                <tr>
+                    <td>url</td>
+                    <td>{{ request.url }}</td>
+                </tr>
+                <tr>
+                    <td>method</td>
+                    <td>{{ request.method }}</td>
+                </tr>
+                <tr>
+                    <td>headers</td>
+                    <td>
+                        <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>body</td>
+                    <td>
+                        <textarea readonly="true" v-model="request.body" rows="2"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>protocol</td>
+                    <td>{{ request.protocol }}</td>
+                </tr>
+            </table>
+            <table v-if="request.status === 'ResponseSent'">
+                <tr>
+                    <th colspan="2">Response</th>
+                </tr>
+                <tr>
+                    <td>response status code</td>
+                    <td>{{ request.responseStatusCode }}</td>
+                </tr>
+                <tr>
+                    <td>response json</td>
+                    <td>{{ request.responseJson }}</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <td></td>
+                    <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
+                    <td v-else-if="request.status === 'Closed'">request closed by sender</td>
+                </tr>
+            </table>
+        </div>
+
 </body>
 <script>
     var app = new Vue({
@@ -127,9 +152,23 @@
                     statusCode: 200,
                     json: '{}',
                     name: '200 {}'
+                },
+                {
+                    id: 1,
+                    statusCode: 404,
+                    json: '{}',
+                    name: '404 {}'
                 }
             ],
             biggestResponseId: 0
+        },
+        computed: {
+            awaitingRequests: function () {
+                return this.requests.filter(r => r.status === 'Open');
+            },
+            completedRequests: function () {
+                return this.requests.filter(r => r.status !== 'Open');
+            }
         },
         methods: {
             sendResponse: function (request) {
@@ -141,10 +180,10 @@
                 request.status = 'ResponseSent';
                 this.saveResponse(request.responseStatusCode, request.responseJson);
             },
-            saveResponse: function(statusCode, json) {
+            saveResponse: function (statusCode, json) {
                 try {
                     json = JSON.stringify(JSON.parse(json))
-                } catch {}
+                } catch { }
                 if (this.savedResponses.some(r => r.statusCode == statusCode && r.json == json)) {
                     return;
                 }
@@ -206,134 +245,71 @@
                     <td>response status code</td>
                     <td>
                         <input v-model="responseStatusCode" />
-                        <div style="max-height: 10em; overflow-y: scroll;">
-                            <div><input type="radio" id="100" value="100" v-model="responseStatusCode">
-                                <label for="100">100 Continue</label></div>
-                            <div><input type="radio" id="101" value="101" v-model="responseStatusCode">
-                                <label for="101">101 Switching Protocols</label></div>
-                            <div><input type="radio" id="102" value="102" v-model="responseStatusCode">
-                                <label for="102">102 Processing</label></div>
-                            <div><input type="radio" id="200" value="200" v-model="responseStatusCode">
-                                <label for="200">200 OK</label></div>
-                            <div><input type="radio" id="201" value="201" v-model="responseStatusCode">
-                                <label for="201">201 Created</label></div>
-                            <div><input type="radio" id="202" value="202" v-model="responseStatusCode">
-                                <label for="202">202 Accepted</label></div>
-                            <div><input type="radio" id="203" value="203" v-model="responseStatusCode">
-                                <label for="203">203 Non-authoritative Information</label></div>
-                            <div><input type="radio" id="204" value="204" v-model="responseStatusCode">
-                                <label for="204">204 No Content</label></div>
-                            <div><input type="radio" id="205" value="205" v-model="responseStatusCode">
-                                <label for="205">205 Reset Content</label></div>
-                            <div><input type="radio" id="206" value="206" v-model="responseStatusCode">
-                                <label for="206">206 Partial Content</label></div>
-                            <div><input type="radio" id="207" value="207" v-model="responseStatusCode">
-                                <label for="207">207 Multi-Status</label></div>
-                            <div><input type="radio" id="208" value="208" v-model="responseStatusCode">
-                                <label for="208">208 Already Reported</label></div>
-                            <div><input type="radio" id="226" value="226" v-model="responseStatusCode">
-                                <label for="226">226 IM Used</label></div>
-                            <div><input type="radio" id="300" value="300" v-model="responseStatusCode">
-                                <label for="300">300 Multiple Choices</label></div>
-                            <div><input type="radio" id="301" value="301" v-model="responseStatusCode">
-                                <label for="301">301 Moved Permanently</label></div>
-                            <div><input type="radio" id="302" value="302" v-model="responseStatusCode">
-                                <label for="302">302 Found</label></div>
-                            <div><input type="radio" id="303" value="303" v-model="responseStatusCode">
-                                <label for="303">303 See Other</label></div>
-                            <div><input type="radio" id="304" value="304" v-model="responseStatusCode">
-                                <label for="304">304 Not Modified</label></div>
-                            <div><input type="radio" id="305" value="305" v-model="responseStatusCode">
-                                <label for="305">305 Use Proxy</label></div>
-                            <div><input type="radio" id="307" value="307" v-model="responseStatusCode">
-                                <label for="307">307 Temporary Redirect</label></div>
-                            <div><input type="radio" id="308" value="308" v-model="responseStatusCode">
-                                <label for="308">308 Permanent Redirect</label></div>
-                            <div><input type="radio" id="400" value="400" v-model="responseStatusCode">
-                                <label for="400">400 Bad Request</label></div>
-                            <div><input type="radio" id="401" value="401" v-model="responseStatusCode">
-                                <label for="401">401 Unauthorized</label></div>
-                            <div><input type="radio" id="402" value="402" v-model="responseStatusCode">
-                                <label for="402">402 Payment Required</label></div>
-                            <div><input type="radio" id="403" value="403" v-model="responseStatusCode">
-                                <label for="403">403 Forbidden</label></div>
-                            <div><input type="radio" id="404" value="404" v-model="responseStatusCode">
-                                <label for="404">404 Not Found</label></div>
-                            <div><input type="radio" id="405" value="405" v-model="responseStatusCode">
-                                <label for="405">405 Method Not Allowed</label></div>
-                            <div><input type="radio" id="406" value="406" v-model="responseStatusCode">
-                                <label for="406">406 Not Acceptable</label></div>
-                            <div><input type="radio" id="407" value="407" v-model="responseStatusCode">
-                                <label for="407">407 Proxy Authentication Required</label></div>
-                            <div><input type="radio" id="408" value="408" v-model="responseStatusCode">
-                                <label for="408">408 Request Timeout</label></div>
-                            <div><input type="radio" id="409" value="409" v-model="responseStatusCode">
-                                <label for="409">409 Conflict</label></div>
-                            <div><input type="radio" id="410" value="410" v-model="responseStatusCode">
-                                <label for="410">410 Gone</label></div>
-                            <div><input type="radio" id="411" value="411" v-model="responseStatusCode">
-                                <label for="411">411 Length Required</label></div>
-                            <div><input type="radio" id="412" value="412" v-model="responseStatusCode">
-                                <label for="412">412 Precondition Failed</label></div>
-                            <div><input type="radio" id="413" value="413" v-model="responseStatusCode">
-                                <label for="413">413 Payload Too Large</label></div>
-                            <div><input type="radio" id="414" value="414" v-model="responseStatusCode">
-                                <label for="414">414 Request-URI Too Long</label></div>
-                            <div><input type="radio" id="415" value="415" v-model="responseStatusCode">
-                                <label for="415">415 Unsupported Media Type</label></div>
-                            <div><input type="radio" id="416" value="416" v-model="responseStatusCode">
-                                <label for="416">416 Requested Range Not Satisfiable</label></div>
-                            <div><input type="radio" id="417" value="417" v-model="responseStatusCode">
-                                <label for="417">417 Expectation Failed</label></div>
-                            <div><input type="radio" id="418" value="418" v-model="responseStatusCode">
-                                <label for="418">418 I\'m a teapot</label></div>
-                            <div><input type="radio" id="421" value="421" v-model="responseStatusCode">
-                                <label for="421">421 Misdirected Request</label></div>
-                            <div><input type="radio" id="422" value="422" v-model="responseStatusCode">
-                                <label for="422">422 Unprocessable Entity</label></div>
-                            <div><input type="radio" id="423" value="423" v-model="responseStatusCode">
-                                <label for="423">423 Locked</label></div>
-                            <div><input type="radio" id="424" value="424" v-model="responseStatusCode">
-                                <label for="424">424 Failed Dependency</label></div>
-                            <div><input type="radio" id="426" value="426" v-model="responseStatusCode">
-                                <label for="426">426 Upgrade Required</label></div>
-                            <div><input type="radio" id="428" value="428" v-model="responseStatusCode">
-                                <label for="428">428 Precondition Required</label></div>
-                            <div><input type="radio" id="429" value="429" v-model="responseStatusCode">
-                                <label for="429">429 Too Many Requests</label></div>
-                            <div><input type="radio" id="431" value="431" v-model="responseStatusCode">
-                                <label for="431">431 Request Header Fields Too Large</label></div>
-                            <div><input type="radio" id="444" value="444" v-model="responseStatusCode">
-                                <label for="444">444 Connection Closed Without Response</label></div>
-                            <div><input type="radio" id="451" value="451" v-model="responseStatusCode">
-                                <label for="451">451 Unavailable For Legal Reasons</label></div>
-                            <div><input type="radio" id="499" value="499" v-model="responseStatusCode">
-                                <label for="499">499 Client Closed Request</label></div>
-                            <div><input type="radio" id="500" value="500" v-model="responseStatusCode">
-                                <label for="500">500 Internal Server Error</label></div>
-                            <div><input type="radio" id="501" value="501" v-model="responseStatusCode">
-                                <label for="501">501 Not Implemented</label></div>
-                            <div><input type="radio" id="502" value="502" v-model="responseStatusCode">
-                                <label for="502">502 Bad Gateway</label></div>
-                            <div><input type="radio" id="503" value="503" v-model="responseStatusCode">
-                                <label for="503">503 Service Unavailable</label></div>
-                            <div><input type="radio" id="504" value="504" v-model="responseStatusCode">
-                                <label for="504">504 Gateway Timeout</label></div>
-                            <div><input type="radio" id="505" value="505" v-model="responseStatusCode">
-                                <label for="505">505 HTTP Version Not Supported</label></div>
-                            <div><input type="radio" id="506" value="506" v-model="responseStatusCode">
-                                <label for="506">506 Variant Also Negotiates</label></div>
-                            <div><input type="radio" id="507" value="507" v-model="responseStatusCode">
-                                <label for="507">507 Insufficient Storage</label></div>
-                            <div><input type="radio" id="508" value="508" v-model="responseStatusCode">
-                                <label for="508">508 Loop Detected</label></div>
-                            <div><input type="radio" id="510" value="510" v-model="responseStatusCode">
-                                <label for="510">510 Not Extended</label></div>
-                            <div><input type="radio" id="511" value="511" v-model="responseStatusCode">
-                                <label for="511">511 Network Authentication Required</label></div>
-                            <div><input type="radio" id="599" value="599" v-model="responseStatusCode">
-                                <label for="599">599 Network Connect Timeout Error</label></div>
-                        </div>
+                        <select v-model="responseStatusCode">
+                            <option value="100">100 Continue</option>
+                            <option value="101">101 Switching Protocols</option>
+                            <option value="102">102 Processing</option>
+                            <option value="200">200 OK</option>
+                            <option value="201">201 Created</option>
+                            <option value="202">202 Accepted</option>
+                            <option value="203">203 Non-authoritative Information</option>
+                            <option value="204">204 No Content</option>
+                            <option value="205">205 Reset Content</option>
+                            <option value="206">206 Partial Content</option>
+                            <option value="207">207 Multi-Status</option>
+                            <option value="208">208 Already Reported</option>
+                            <option value="226">226 IM Used</option>
+                            <option value="300">300 Multiple Choices</option>
+                            <option value="301">301 Moved Permanently</option>
+                            <option value="302">302 Found</option>
+                            <option value="303">303 See Other</option>
+                            <option value="304">304 Not Modified</option>
+                            <option value="305">305 Use Proxy</option>
+                            <option value="307">307 Temporary Redirect</option>
+                            <option value="308">308 Permanent Redirect</option>
+                            <option value="400">400 Bad Request</option>
+                            <option value="401">401 Unauthorized</option>
+                            <option value="402">402 Payment Required</option>
+                            <option value="403">403 Forbidden</option>
+                            <option value="404">404 Not Found</option>
+                            <option value="405">405 Method Not Allowed</option>
+                            <option value="406">406 Not Acceptable</option>
+                            <option value="407">407 Proxy Authentication Required</option>
+                            <option value="408">408 Request Timeout</option>
+                            <option value="409">409 Conflict</option>
+                            <option value="410">410 Gone</option>
+                            <option value="411">411 Length Required</option>
+                            <option value="412">412 Precondition Failed</option>
+                            <option value="413">413 Payload Too Large</option>
+                            <option value="414">414 Request-URI Too Long</option>
+                            <option value="415">415 Unsupported Media Type</option>
+                            <option value="416">416 Requested Range Not Satisfiable</option>
+                            <option value="417">417 Expectation Failed</option>
+                            <option value="418">418 I\'m a teapot</option>
+                            <option value="421">421 Misdirected Request</option>
+                            <option value="422">422 Unprocessable Entity</option>
+                            <option value="423">423 Locked</option>
+                            <option value="424">424 Failed Dependency</option>
+                            <option value="426">426 Upgrade Required</option>
+                            <option value="428">428 Precondition Required</option>
+                            <option value="429">429 Too Many Requests</option>
+                            <option value="431">431 Request Header Fields Too Large</option>
+                            <option value="444">444 Connection Closed Without Response</option>
+                            <option value="451">451 Unavailable For Legal Reasons</option>
+                            <option value="499">499 Client Closed Request</option>
+                            <option value="500">500 Internal Server Error</option>
+                            <option value="501">501 Not Implemented</option>
+                            <option value="502">502 Bad Gateway</option>
+                            <option value="503">503 Service Unavailable</option>
+                            <option value="504">504 Gateway Timeout</option>
+                            <option value="505">505 HTTP Version Not Supported</option>
+                            <option value="506">506 Variant Also Negotiates</option>
+                            <option value="507">507 Insufficient Storage</option>
+                            <option value="508">508 Loop Detected</option>
+                            <option value="510">510 Not Extended</option>
+                            <option value="511">511 Network Authentication Required</option>
+                            <option value="599">599 Network Connect Timeout Error</option>
+                        </select>
                     </td>
                 </tr>
                 <tr>
@@ -356,7 +332,7 @@
                 request.headers = JSON.stringify(request.headers, null, 2);
                 try {
                     request.body = JSON.stringify(request.body, null, 2);
-                } catch {}
+                } catch { }
                 const found = app.requests.find(r => r.requestKey === request.requestKey);
                 if (found) {
                     found = Object.assign(found, request);
