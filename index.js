@@ -75,7 +75,11 @@ app.all('/:serverId*', function (req, res) {
     var connection = socketMap[serverId];
     var requestKey = ++connection.lastRequestKey;
     connection.responseMap[requestKey] = res;
-    var requestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol, status: 'Open' };
+    var directUrl = req.url.substring(serverId.length + 1);
+    if (directUrl == '') {
+        directUrl = '/';
+    }
+    var requestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, directUrl: directUrl, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol, status: 'Open' };
     connection.ws.send(JSON.stringify(requestData));
     req.on('aborted', function () {
         requestData.status = 'Closed';
