@@ -3,13 +3,23 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css"> -->
+    <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css" type="text/css">
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
 </head>
 
 <style>
     body {
         max-width: 1140px;
+    }
+
+    .offblink {
+        padding: 1px;
+    }
+
+    .blink {
+        border: 1px dashed;
+        border-radius: 10px;
     }
 </style>
 
@@ -25,66 +35,68 @@
         <div v-if="!awaitingRequests.length">(empty)</div>
         <div v-for="request in awaitingRequests">
             <hr>
-            <table class="table">
-                <tr>
-                    <th colspan="2">Request</th>
-                </tr>
-                <tr>
-                    <td>url</td>
-                    <td>{{ request.url }}</td>
-                </tr>
-                <tr>
-                    <td>direct url</td>
-                    <td>{{ request.directUrl }}</td>
-                </tr>
-                <tr>
-                    <td>method</td>
-                    <td>{{ request.method }}</td>
-                </tr>
-                <tr>
-                    <td>headers</td>
-                    <td>
-                        <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
-                    </td>
-                </tr>
-                <tr>
-                    <td>body</td>
-                    <td>
-                        <textarea readonly="true" v-model="request.body" rows="2"></textarea>
-                    </td>
-                </tr>
-                <tr>
-                    <td>protocol</td>
-                    <td>{{ request.protocol }}</td>
-                </tr>
-            </table>
-            <table v-if="request.status === 'ResponseSent'">
-                <tr>
-                    <th colspan="2">Response</th>
-                </tr>
-                <tr>
-                    <td>response status code</td>
-                    <td>{{ request.responseStatusCode }}</td>
-                </tr>
-                <tr>
-                    <td>response json</td>
-                    <td>{{ request.responseJson }}</td>
-                </tr>
-            </table>
-            <response-editor v-else-if="request.status === 'Open'" v-bind:status-code="request.responseStatusCode"
-                v-bind:json="request.responseJson" v-bind:saved-responses="savedResponses"
-                v-on:jsoninput="request.responseJson = $event"
-                v-on:statuscodeinput="request.responseStatusCode = $event"></response-editor>
-            <table>
-                <tr>
-                    <td></td>
-                    <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
-                    <td v-else-if="request.status === 'Closed'">request closed by sender</td>
-                    <td v-else>
-                        <button @click="sendResponse(request)">send response</button>
-                    </td>
-                </tr>
-            </table>
+            <div v-bind:class="{ blink: blinked, offblink: !blinked }">
+                <table>
+                    <tr>
+                        <th colspan="2">Request</th>
+                    </tr>
+                    <tr>
+                        <td>url</td>
+                        <td>{{ request.url }}</td>
+                    </tr>
+                    <tr>
+                        <td>direct url</td>
+                        <td>{{ request.directUrl }}</td>
+                    </tr>
+                    <tr>
+                        <td>method</td>
+                        <td>{{ request.method }}</td>
+                    </tr>
+                    <tr>
+                        <td>headers</td>
+                        <td>
+                            <textarea readonly="true" v-model="request.headers" rows="3"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>body</td>
+                        <td>
+                            <textarea readonly="true" v-model="request.body" rows="3"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>protocol</td>
+                        <td>{{ request.protocol }}</td>
+                    </tr>
+                </table>
+                <table v-if="request.status === 'ResponseSent'">
+                    <tr>
+                        <th colspan="2">Response</th>
+                    </tr>
+                    <tr>
+                        <td>response status code</td>
+                        <td>{{ request.responseStatusCode }}</td>
+                    </tr>
+                    <tr>
+                        <td>response json</td>
+                        <td>{{ request.responseJson }}</td>
+                    </tr>
+                </table>
+                <response-editor v-else-if="request.status === 'Open'" v-bind:status-code="request.responseStatusCode"
+                    v-bind:json="request.responseJson" v-bind:saved-responses="savedResponses"
+                    v-on:jsoninput="request.responseJson = $event"
+                    v-on:statuscodeinput="request.responseStatusCode = $event"></response-editor>
+                <table>
+                    <tr>
+                        <td></td>
+                        <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
+                        <td v-else-if="request.status === 'Closed'">request closed by sender</td>
+                        <td v-else>
+                            <button @click="sendResponse(request)">send response</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
         <h3>Completed requests</h3>
