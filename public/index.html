@@ -2,17 +2,11 @@
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css"> -->
-    <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css" type="text/css">
+    
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
 </head>
 
 <style>
-    body {
-        max-width: 1140px;
-    }
-
     .offblink {
         padding: 1px;
     }
@@ -21,22 +15,139 @@
         border: 1px dashed;
         border-radius: 10px;
     }
+
+    .theme-label {
+        display: inline-block;
+    }
+
+    .theme-radio-div {
+        display: inline-block;
+    }
 </style>
 
 <body>
     <div id="app">
-        Your unique endpoint is <input v-model="serverUrl" readonly="true" onClick="this.select();"
-            style="width: 100%" />
-        <div v-if="!requests.length">
-            <hr>
-            Requests made to your endpoint will appear below
+        <div>
+            <!-- <div class="theme-radio-div"><input v-model="theme" type="radio" id="sakura-dark" name="theme" value="sakura-dark" checked /><label for="sakura-dark" class="theme-label">Sakura Dark</label></div>
+            <div class="theme-radio-div"><input v-model="theme" type="radio" id="sakura" name="theme" value="sakura" /><label for="sakura" class="theme-label">Sakura Light</label></div>
+            <div class="theme-radio-div"><input v-model="theme" type="radio" id="sakura-dark-solarized" name="theme" value="sakura-dark-solarized" /><label for="sakura-dark-solarized" class="theme-label">Sakura Dark Solarized</label></div>
+            <div class="theme-radio-div"><input v-model="theme" type="radio" id="water-dark" name="theme" value="water-dark" /><label for="water-dark" class="theme-label">Water Dark</label></div>
+            <div class="theme-radio-div"><input v-model="theme" type="radio" id="water-light" name="theme" value="water-light" /><label for="water-light" class="theme-label">Water Light</label></div> -->
+
+            Theme
+            <select v-model="theme">
+                <optgroup label="Sakura">
+                    <option value="sakura-dark">Sakura Dark</option>
+                    <option value="sakura">Sakura Light</option>
+                    <option value="sakura-dark-solarized">Sakura Dark Solarized</option>
+                </optgroup>
+                <optgroup label="Water">
+                    <option value="water-dark">Water Dark</option>
+                    <option value="water-light">Water Light</option>
+                </optgroup>
+                <optgroup label="Tufte">
+                    <option value="tufte">Tufte</option>
+                </optgroup>
+                <optgroup label="MVP">
+                    <option value="mvp">MVP</option>
+                </optgroup>
+            </select>
+            <link v-if="theme == 'sakura-dark'" rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css"
+                type="text/css">
+            <link v-if="theme == 'sakura'" rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css"
+                type="text/css">
+            <link v-if="theme == 'sakura-dark-solarized'" rel="stylesheet"
+                href="https://unpkg.com/sakura.css/css/sakura-dark-solarized.css" type="text/css">
+            <link v-if="theme == 'water-dark'" rel="stylesheet"
+                href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+            <link v-if="theme == 'water-light'" rel="stylesheet"
+                href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css">
+            <link v-if="theme == 'tufte'" rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css"
+                integrity="sha512-cG7Z4degp9718dDjGjeJmar0+g7RtE/olDe0VRKEFDtOEkm91JSvE7ZxN2+sijkU0AAK3e2xzu7bafBGC/uiqA=="
+                crossorigin="anonymous" />
+            <link v-if="theme == 'mvp'" rel="stylesheet" href="https://unpkg.com/mvp.css">
         </div>
-        <h3>Awaiting requests</h3>
-        <div v-if="!awaitingRequests.length">(empty)</div>
-        <div v-for="request in awaitingRequests">
-            <hr>
-            <div v-bind:class="{ blink: blinked, offblink: !blinked }">
-                <table>
+        <div id="app-content">
+            Your unique endpoint is <input v-model="serverUrl" readonly="true" onClick="this.select();"
+                style="width: 100%" />
+            <div v-if="!requests.length">
+                <hr>
+                Requests made to your endpoint will appear below
+            </div>
+            <h3>Awaiting requests</h3>
+            <div v-if="!awaitingRequests.length">(empty)</div>
+            <div v-for="request in awaitingRequests">
+                <hr>
+                <div v-bind:class="{ blink: blinked, offblink: !blinked }">
+                    <table>
+                        <tr>
+                            <th colspan="2">Request</th>
+                        </tr>
+                        <tr>
+                            <td>url</td>
+                            <td>{{ request.url }}</td>
+                        </tr>
+                        <tr>
+                            <td>direct url</td>
+                            <td>{{ request.directUrl }}</td>
+                        </tr>
+                        <tr>
+                            <td>method</td>
+                            <td>{{ request.method }}</td>
+                        </tr>
+                        <tr>
+                            <td>headers</td>
+                            <td>
+                                <textarea readonly="true" v-model="request.headers" rows="3"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>body</td>
+                            <td>
+                                <textarea readonly="true" v-model="request.body" rows="3"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>protocol</td>
+                            <td>{{ request.protocol }}</td>
+                        </tr>
+                    </table>
+                    <table v-if="request.status === 'ResponseSent'">
+                        <tr>
+                            <th colspan="2">Response</th>
+                        </tr>
+                        <tr>
+                            <td>response status code</td>
+                            <td>{{ request.responseStatusCode }}</td>
+                        </tr>
+                        <tr>
+                            <td>response json</td>
+                            <td>{{ request.responseJson }}</td>
+                        </tr>
+                    </table>
+                    <response-editor v-else-if="request.status === 'Open'"
+                        v-bind:status-code="request.responseStatusCode" v-bind:json="request.responseJson"
+                        v-bind:saved-responses="savedResponses" v-on:jsoninput="request.responseJson = $event"
+                        v-on:statuscodeinput="request.responseStatusCode = $event"></response-editor>
+                    <table>
+                        <tr>
+                            <td></td>
+                            <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
+                            <td v-else-if="request.status === 'Closed'">request closed by sender</td>
+                            <td v-else>
+                                <button @click="sendResponse(request)">send response</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <h3>Completed requests</h3>
+            <div v-if="!completedRequests.length">(empty)</div>
+            <div v-for="request in completedRequests">
+                <hr>
+                <table class="table">
                     <tr>
                         <th colspan="2">Request</th>
                     </tr>
@@ -55,13 +166,13 @@
                     <tr>
                         <td>headers</td>
                         <td>
-                            <textarea readonly="true" v-model="request.headers" rows="3"></textarea>
+                            <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
                         </td>
                     </tr>
                     <tr>
                         <td>body</td>
                         <td>
-                            <textarea readonly="true" v-model="request.body" rows="3"></textarea>
+                            <textarea readonly="true" v-model="request.body" rows="2"></textarea>
                         </td>
                     </tr>
                     <tr>
@@ -82,80 +193,14 @@
                         <td>{{ request.responseJson }}</td>
                     </tr>
                 </table>
-                <response-editor v-else-if="request.status === 'Open'" v-bind:status-code="request.responseStatusCode"
-                    v-bind:json="request.responseJson" v-bind:saved-responses="savedResponses"
-                    v-on:jsoninput="request.responseJson = $event"
-                    v-on:statuscodeinput="request.responseStatusCode = $event"></response-editor>
                 <table>
                     <tr>
                         <td></td>
                         <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
                         <td v-else-if="request.status === 'Closed'">request closed by sender</td>
-                        <td v-else>
-                            <button @click="sendResponse(request)">send response</button>
-                        </td>
                     </tr>
                 </table>
             </div>
-        </div>
-
-        <h3>Completed requests</h3>
-        <div v-if="!completedRequests.length">(empty)</div>
-        <div v-for="request in completedRequests">
-            <hr>
-            <table class="table">
-                <tr>
-                    <th colspan="2">Request</th>
-                </tr>
-                <tr>
-                    <td>url</td>
-                    <td>{{ request.url }}</td>
-                </tr>
-                <tr>
-                    <td>direct url</td>
-                    <td>{{ request.directUrl }}</td>
-                </tr>
-                <tr>
-                    <td>method</td>
-                    <td>{{ request.method }}</td>
-                </tr>
-                <tr>
-                    <td>headers</td>
-                    <td>
-                        <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
-                    </td>
-                </tr>
-                <tr>
-                    <td>body</td>
-                    <td>
-                        <textarea readonly="true" v-model="request.body" rows="2"></textarea>
-                    </td>
-                </tr>
-                <tr>
-                    <td>protocol</td>
-                    <td>{{ request.protocol }}</td>
-                </tr>
-            </table>
-            <table v-if="request.status === 'ResponseSent'">
-                <tr>
-                    <th colspan="2">Response</th>
-                </tr>
-                <tr>
-                    <td>response status code</td>
-                    <td>{{ request.responseStatusCode }}</td>
-                </tr>
-                <tr>
-                    <td>response json</td>
-                    <td>{{ request.responseJson }}</td>
-                </tr>
-            </table>
-            <table>
-                <tr>
-                    <td></td>
-                    <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
-                    <td v-else-if="request.status === 'Closed'">request closed by sender</td>
-                </tr>
-            </table>
         </div>
 
 </body>

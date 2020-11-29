@@ -23,7 +23,8 @@ const app = new Vue({
             }
         ],
         biggestResponseId: 0,
-        blinked: true
+        blinked: true,
+        theme: 'sakura-dark-solarized'
     },
     computed: {
         awaitingRequests: function () {
