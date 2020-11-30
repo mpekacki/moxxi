@@ -60,7 +60,8 @@ interface RequestData {
   body: string,
   ip: string,
   protocol: string,
-  status: string
+  status: string,
+  date: Date
 }
 
 const socketMap: ConnectionMap = {};
@@ -122,7 +123,7 @@ app.all('/:serverId*', (req, res) => {
   if (directUrl == '') {
     directUrl = '/';
   }
-  const requestData: RequestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, directUrl: directUrl, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol, status: 'Open' };
+  const requestData: RequestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, directUrl: directUrl, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol, status: 'Open', date: new Date() };
   connection.ws.send(JSON.stringify(requestData));
 
   req.on('aborted', () => {
