@@ -22,9 +22,12 @@
 
     #app {
         display: flex;
-        flex-flow: column nowrap;
-        align-items: stretch;
-        justify-content: space-around;
+        flex-flow: row wrap;
+        justify-content: flex-start;
+    }
+
+    #app > * {
+        flex: 1 100%;
     }
 
     .header {
@@ -44,6 +47,14 @@
         display: flex;
         flex-flow: row wrap;
     }
+
+    .req {
+        margin-right: 1em;
+    }
+
+    table {
+        table-layout: auto !important;
+    }
 </style>
 
 <body>
@@ -53,8 +64,8 @@
                 <h1 class="page-title">My Server</h1>
             </div>
             <div>
-                Your unique endpoint is <input v-model="serverUrl" readonly="true" onClick="this.select();"
-                    style="width: 100%" />
+                <label>Your unique endpoint is</label><input v-model="serverUrl" readonly="true" onClick="this.select();"
+                    style="width: 100%" size="85" />
             </div>
             <div>
                 Theme
@@ -102,14 +113,14 @@
             </div>
         </header>
         <div id="app-wrapper">
+            <hr>
             <div v-if="!requests.length">
-                <hr>
                 Requests made to your endpoint will appear below
             </div>
             <h3>Awaiting requests</h3>
             <div v-if="!awaitingRequests.length">(empty)</div>
             <div class="requests">
-                <div v-for="request in awaitingRequests">
+                <div v-for="request in awaitingRequests" class="req">
                     <hr>
                     <div v-bind:class="{ blink: blinked, offblink: !blinked }">
                         <table>
@@ -183,7 +194,7 @@
             <h3>Completed requests</h3>
             <div v-if="!completedRequests.length">(empty)</div>
             <div class="requests">
-                <div v-for="request in completedRequests">
+                <div v-for="request in completedRequests" class="req">
                     <hr>
                     <table class="table">
                         <tr>
