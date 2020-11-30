@@ -22,7 +22,7 @@ const app = new Vue({
                 urlPattern: ''
             }
         ],
-        biggestResponseId: 0,
+        biggestResponseId: 1,
         blinked: true,
         theme: 'sakura-dark-solarized'
     },
