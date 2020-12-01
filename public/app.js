@@ -26,7 +26,7 @@ const app = new Vue({
         selectedResponseId: 0,
         blinked: true,
         responseEditorVisible: false,
-        theme: 'sakura'
+        theme: 'sakura-earthly'
     },
     computed: {
         awaitingRequests: function () {
