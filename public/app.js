@@ -26,7 +26,7 @@ const app = new Vue({
         selectedResponseId: 0,
         blinked: true,
         responseEditorVisible: false,
-        theme: 'sakura-earthly'
+        theme: 'sakura'
     },
     computed: {
         awaitingRequests: function () {
@@ -65,7 +65,10 @@ const app = new Vue({
             if (this.savedResponses.some(r => r.statusCode == statusCode && r.json == json)) {
                 return;
             }
-            this.savedResponses.push({ id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: statusCode + ' ' + json.substring(0, 50), urlPattern: '' });
+            this.savedResponses.push({ id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: createResponseName(statusCode, json), urlPattern: '' });
+        },
+        createResponseName: function(statusCode, json) {
+            return statusCode + ' ' + json.substring(0, 50);
         },
         newBlankResponse: function () {
             const id = ++this.biggestResponseId;
@@ -100,38 +103,39 @@ Vue.component('response-editor', {
     },
     props: ['savedResponses', 'selectedResponseId'],
     template: `
-        <table>
-            <tr>
-                <td>
+        <div class="form">
+            <div class="form-control" style="flex: 1 100%">
+                <div>
                     saved response
-                </td>
-                <td>
+                </div>
+                <div>
                     <select v-model="selectedRespId">
                         <option v-for="response in responses" v-bind:value="response.id">{{ response.name }}</option>
                     </select>
+                </div>
+                <div>
                     <button v-on:click="$emit('newresponse')">New</button>
-                </td>
-            </tr>
-            <tr v-if="selectedResponse">
-                <td>
+                </div>
+            </div>
+            <div class="form-control" v-if="selectedResponse">
+                <div>
                     name
-                </td>
-                <td>
+                </div>
+                <div>
                     <input v-model="selectedResponse.name"></input>
-                </td>
-            </tr>
-            <tr v-if="selectedResponse">
-                <td>
+                </div>
+            </div>
+            <div class="form-control" v-if="selectedResponse">
+                <div>
                     url pattern for auto-response
-                </td>
-                <td>
+                </div>
+                <div>
                     <input v-model="selectedResponse.urlPattern"></input>
-                </td>
-            </tr>
-            <tr>
-                <td>response status code</td>
-                <td>
-                    <input v-model="selectedResponse.statusCode" />
+                </div>
+            </div>
+            <div class="form-control">
+                <div>response status code</div>
+                <div>
                     <select v-model="selectedResponse.statusCode">
                         <option value="100">100 Continue</option>
                         <option value="101">101 Switching Protocols</option>
@@ -197,15 +201,15 @@ Vue.component('response-editor', {
                         <option value="511">511 Network Authentication Required</option>
                         <option value="599">599 Network Connect Timeout Error</option>
                     </select>
-                </td>
-            </tr>
-            <tr>
-                <td>response json</td>
-                <td>
+                </div>
+            </div>
+            <div class="form-control">
+                <div style="align-self: flex-start">response json</div>
+                <div style="align-self: flex-start">
                     <textarea v-model="selectedResponse.json"></textarea>
-                </td>
-            </tr>
-        </table>
+                </div>
+            </div>
+        </div>
     `
 });
 

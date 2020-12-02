@@ -13,12 +13,13 @@
     }
 
     .offblink {
-        padding: 2px;
+        padding: 6px;
     }
 
     .blink {
         border: 2px dashed;
         border-radius: 10px;
+        padding: 4px;
     }
 
     #app {
@@ -54,6 +55,22 @@
 
     table {
         table-layout: auto !important;
+    }
+
+    .form {
+        display:flex;
+        flex-flow: row wrap;
+    }
+
+    .form-control {
+        display:flex;
+        flex-flow: row wrap;
+        align-items: baseline;
+        margin-left: 2em;
+    }
+
+    .form-control > * {
+        margin-right: 1em;
     }
 </style>
 
@@ -173,21 +190,9 @@
                                 <td>protocol</td>
                                 <td>{{ request.protocol }}</td>
                             </tr>
-                        </table>
-                        <table v-if="request.status === 'ResponseSent'">
                             <tr>
                                 <th colspan="2">Response</th>
                             </tr>
-                            <tr>
-                                <td>response status code</td>
-                                <td>{{ request.responseStatusCode }}</td>
-                            </tr>
-                            <tr>
-                                <td>response json</td>
-                                <td>{{ request.responseJson }}</td>
-                            </tr>
-                        </table>
-                        <table>
                             <tr>
                                 <td>
                                     saved response
@@ -203,7 +208,6 @@
                             <tr>
                                 <td>response status code</td>
                                 <td>
-                                    <input v-model="request.responseStatusCode" />
                                     <select v-model="request.responseStatusCode">
                                         <option value="100">100 Continue</option>
                                         <option value="101">101 Switching Protocols</option>
@@ -277,14 +281,6 @@
                                     <textarea v-model="request.responseJson"></textarea>
                                 </td>
                             </tr>
-                        </table>
-                        <!-- <response-editor v-else-if="request.status === 'Open'" full="true"
-                            v-bind:status-code="request.responseStatusCode" v-bind:json="request.responseJson"
-                            v-bind:selected-response-id="selectedResponseId" v-bind:saved-responses="savedResponses"
-                            v-on:jsoninput="request.responseJson = $event"
-                            v-on:statuscodeinput="request.responseStatusCode = $event"
-                            v-on:responseidselected="selectedResponseId = $event"></response-editor> -->
-                        <table>
                             <tr>
                                 <td></td>
                                 <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
@@ -341,8 +337,7 @@
                             <td>protocol</td>
                             <td>{{ request.protocol }}</td>
                         </tr>
-                    </table>
-                    <table v-if="request.status === 'ResponseSent'">
+                    <tbody v-if="request.status === 'ResponseSent'">
                         <tr>
                             <th colspan="2">Response</th>
                         </tr>
@@ -354,8 +349,7 @@
                             <td>response json</td>
                             <td>{{ request.responseJson }}</td>
                         </tr>
-                    </table>
-                    <table>
+                    </tbody>
                         <tr>
                             <td></td>
                             <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!</td>
