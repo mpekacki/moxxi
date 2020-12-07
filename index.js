@@ -25,7 +25,9 @@ var socketMap = {};
 wss.on('connection', function (ws, request) {
     var cookies = new Cookies(request, new http.ServerResponse(request), keys);
     var session = JSON.parse(Buffer.from(cookies.get('session') || '', 'base64').toString('utf8'));
+    console.log(session);
     var serverId = session.serverId;
+    var predefinedResponses = session.predefinedResponses;
     var connection;
     if (serverId in socketMap) {
         socketMap[serverId].ws.terminate();
@@ -36,7 +38,7 @@ wss.on('connection', function (ws, request) {
         connection = { serverId: serverId, responseMap: {}, lastRequestKey: 0, ws: ws };
         socketMap[serverId] = connection;
     }
-    var endpointData = { serverId: serverId };
+    var endpointData = { serverId: serverId, predefinedResponses: predefinedResponses };
     ws.send(JSON.stringify(endpointData));
     ws.on('message', function (message) {
         var incomingResponse = JSON.parse(message);
@@ -62,10 +64,50 @@ wss.on('connection', function (ws, request) {
     });
 });
 app.get('/', function (req, res) {
-    if (req.session && !req.session.serverId) {
-        req.session.serverId = uuid_1.v4();
+    if (req.session) {
+        if (!req.session.serverId) {
+            req.session.serverId = uuid_1.v4();
+        }
+        if (!req.session.predefinedResponses) {
+            req.session.predefinedResponses = [
+                {
+                    id: 0,
+                    name: '200 {}',
+                    statusCode: 200,
+                    json: '{}'
+                },
+                {
+                    id: 1,
+                    name: '404 {}',
+                    statusCode: 404,
+                    json: '{}'
+                }
+            ];
+        }
     }
     res.sendFile(path.join(__dirname, './public', 'index.html'));
+});
+app.post('/predefined-response', function (req, res) {
+    var predefinedResponse = req.body;
+    if (req.session) {
+        req.session.predefinedResponses.push(predefinedResponse);
+        console.log(req.session);
+        res.status(201).send();
+        return;
+    }
+    res.status(500);
+});
+app.patch('/predefined-response', function (req, res) {
+    var predefinedResponse = req.body;
+    if (req.session) {
+        var toModify = req.session.predefinedResponses.find(function (r) { return r.id == predefinedResponse.id; });
+        if (toModify) {
+            toModify = Object.assign(toModify, predefinedResponse);
+            res.status(200);
+            return;
+        }
+    }
+    res.status(500);
 });
 app.use('/public', express.static('public'));
 app.all('/:serverId*', function (req, res) {

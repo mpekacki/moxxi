@@ -6,27 +6,11 @@ const app = new Vue({
         serverId: '',
         serverUrl: '',
         requests: [],
-        savedResponses: [
-            {
-                id: 0,
-                statusCode: 200,
-                json: '{}',
-                name: '200 {}',
-                urlPattern: ''
-            },
-            {
-                id: 1,
-                statusCode: 404,
-                json: '{}',
-                name: '404 {}',
-                urlPattern: ''
-            }
-        ],
-        biggestResponseId: 1,
+        savedResponses: [],
         selectedResponseId: 0,
         blinked: true,
         responseEditorVisible: false,
-        theme: 'sakura'
+        theme: 'sakura-dark'
     },
     computed: {
         awaitingRequests: function () {
@@ -34,6 +18,9 @@ const app = new Vue({
         },
         completedRequests: function () {
             return this.requests.filter(r => r.status !== 'Open');
+        },
+        biggestResponseId: function () {
+            return this.savedResponses.reduce((accumulator, currentValue) => currentValue.id > accumulator ? currentValue.id : accumulator, 0) || 0;
         }
     },
     created() {
@@ -65,20 +52,26 @@ const app = new Vue({
             if (this.savedResponses.some(r => r.statusCode == statusCode && r.json == json)) {
                 return;
             }
-            this.savedResponses.push({ id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: createResponseName(statusCode, json), urlPattern: '' });
+            const newResp = { id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: createResponseName(statusCode, json), urlPattern: '' };
+            this.savedResponses.push(newResp);
         },
-        createResponseName: function(statusCode, json) {
+        createResponseName: function (statusCode, json) {
             return statusCode + ' ' + json.substring(0, 50);
         },
         newBlankResponse: function () {
             const id = ++this.biggestResponseId;
-            this.savedResponses.push({ id: id, statusCode: 200, json: '{}', name: 'Response ' + this.biggestResponseId, urlPattern: '' });
+            const newResp = { id: id, statusCode: 200, json: '{}', name: 'Response ' + this.biggestResponseId, urlPattern: '' };
+            this.savedResponses.push(newResp);
             this.selectedResponseId = id;
+            // fetch('/predefined-response', {
+            //     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(newResp)
+            // }).then(r => console.log(r));
         },
         blink: function () {
             this.blinked = !this.blinked;
         },
-        toggleResponseEditor: function() {
+        toggleResponseEditor: function () {
             this.responseEditorVisible = !this.responseEditorVisible;
         }
     }
@@ -99,43 +92,37 @@ Vue.component('response-editor', {
     watch: {
         selectedResponseId: function (newVal) {
             this.selectedRespId = newVal;
+        },
+        selectedResponses: function (newVal) {
+            this.responses = newVal;
         }
     },
     props: ['savedResponses', 'selectedResponseId'],
     template: `
-        <div class="form">
+        <form class="form">
             <div class="form-control" style="flex: 1 100%">
-                <div>
+                <label>
                     saved response
-                </div>
-                <div>
+                </label>
                     <select v-model="selectedRespId">
                         <option v-for="response in responses" v-bind:value="response.id">{{ response.name }}</option>
                     </select>
-                </div>
-                <div>
-                    <button v-on:click="$emit('newresponse')">New</button>
-                </div>
+                    <button v-on:click="$emit('newresponse'); $event.preventDefault();">New</button>
             </div>
             <div class="form-control" v-if="selectedResponse">
-                <div>
+                <label>
                     name
-                </div>
-                <div>
+                </label>
                     <input v-model="selectedResponse.name"></input>
-                </div>
             </div>
             <div class="form-control" v-if="selectedResponse">
-                <div>
+                <label>
                     url pattern for auto-response
-                </div>
-                <div>
+                </label>
                     <input v-model="selectedResponse.urlPattern"></input>
-                </div>
             </div>
             <div class="form-control">
-                <div>response status code</div>
-                <div>
+                <label>response status code</label>
                     <select v-model="selectedResponse.statusCode">
                         <option value="100">100 Continue</option>
                         <option value="101">101 Switching Protocols</option>
@@ -201,15 +188,12 @@ Vue.component('response-editor', {
                         <option value="511">511 Network Authentication Required</option>
                         <option value="599">599 Network Connect Timeout Error</option>
                     </select>
-                </div>
             </div>
             <div class="form-control">
-                <div style="align-self: flex-start">response json</div>
-                <div style="align-self: flex-start">
+                <label>response json</label>
                     <textarea v-model="selectedResponse.json"></textarea>
-                </div>
             </div>
-        </div>
+        </form>
     `
 });
 
@@ -242,6 +226,8 @@ ws.onmessage = function (event) {
         } else if (message.serverId) {
             app.serverId = message.serverId;
             app.serverUrl = location.origin + '/' + message.serverId;
+            console.log(message.predefinedResponses);
+            app.savedResponses.push(...message.predefinedResponses);
         }
     } catch { }
 }

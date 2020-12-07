@@ -12,6 +12,10 @@
         margin: 1em !important;
     }
 
+    body * {
+        font-family: 'Bahnschrift', sans-serif !important;
+    }
+
     .offblink {
         padding: 6px;
     }
@@ -40,7 +44,7 @@
     }
 
     .page-title {
-        font-family: 'Consolas', Courier, monospace;
+        font-family: 'Consolas', Courier, monospace !important;
         margin-top: 0;
     }
 
@@ -59,7 +63,8 @@
 
     .form {
         display: flex;
-        flex-flow: row wrap;
+        flex-flow: column nowrap;
+        justify-content: space-between;
     }
 
     .form-control {
@@ -67,10 +72,21 @@
         flex-flow: row wrap;
         align-items: baseline;
         margin-left: 2em;
+        flex-basis: 20%;
+        margin-bottom: 1em;
     }
 
     .form-control>* {
+        flex-basis: 20%;
         margin-right: 1em;
+    }
+
+    .form-control > button {
+        flex-basis: 5%;
+    }
+
+    form {
+        margin-top: 1em;
     }
 </style>
 
@@ -93,6 +109,7 @@
                     <option value="sakura-earthly">Sakura Earthly</option>
                     <option value="sakura-ink">Sakura Ink</option>
                     <option value="sakura-vader">Sakura Vader</option>
+                    <option value="water">Water</option>
                     <option value="water-dark">Water Dark</option>
                     <option value="water-light">Water Light</option>
                     <option value="tufte">Tufte</option>
@@ -106,7 +123,7 @@
             </div>
         </header>
         <hr>
-        <div>
+        <div class="response-editor-wrapper">
             <button @click="toggleResponseEditor()">Response editor</button>
             <response-editor v-if="responseEditorVisible" v-bind:saved-responses="savedResponses"
                 v-bind:selected-response-id="selectedResponseId" v-on:newresponse="newBlankResponse()">
@@ -336,6 +353,7 @@
             type="text/css">
         <link v-if="theme == 'sakura-vader'" rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-vader.css"
             type="text/css">
+        <link v-if="theme == 'water'" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
         <link v-if="theme == 'water-dark'" rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
         <link v-if="theme == 'water-light'" rel="stylesheet"
