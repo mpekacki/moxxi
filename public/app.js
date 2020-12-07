@@ -229,5 +229,7 @@ ws.onmessage = function (event) {
             console.log(message.predefinedResponses);
             app.savedResponses.push(...message.predefinedResponses);
         }
-    } catch { }
+    } catch (error) { 
+        console.error(error);
+    }
 }
