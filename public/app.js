@@ -116,7 +116,293 @@ const app = new Vue({
                 }
             });
         }
-    }
+    },
+    template: `
+    <div>
+    <header class="header">
+    <div>
+        <label>Your unique endpoint is</label><input v-model="serverUrl" readonly="true"
+            onClick="this.select();" style="width: 100%" size="85" />
+    </div>
+    <div>
+        Theme
+        <select v-model="theme">
+            <option value="sakura-dark">Sakura Dark</option>
+            <option value="sakura">Sakura Light</option>
+            <option value="sakura-dark-solarized">Sakura Dark Solarized</option>
+            <option value="sakura-earthly">Sakura Earthly</option>
+            <option value="sakura-ink">Sakura Ink</option>
+            <option value="sakura-vader">Sakura Vader</option>
+            <option value="water">Water</option>
+            <option value="water-dark">Water Dark</option>
+            <option value="water-light">Water Light</option>
+            <option value="tufte">Tufte</option>
+            <option value="mvp">MVP</option>
+            <option value="milligram">Milligram</option>
+            <option value="picnic">Picnic</option>
+            <option value="mini">Mini</option>
+            <option value="mini-dark">Mini Dark</option>
+            <option value="mini-nord">Mini Nord</option>
+        </select>
+    </div>
+</header>
+<hr>
+<div class="app-content">
+    <div class="all-requests">
+        <div class="request-group">
+            <h4>Awaiting requests</h4>
+            <div v-if="!awaitingRequests.length">(empty)</div>
+            <div class="requests">
+                <div v-for="request in awaitingRequests" class="req">
+                    <hr>
+                    <div v-bind:class="{ blink: blinked, offblink: !blinked }">
+                        <table>
+                            <tr>
+                                <th colspan="2">Request</th>
+                            </tr>
+                            <tr>
+                                <td>date</td>
+                                <td>{{ request.date }}</td>
+                            </tr>
+                            <tr>
+                                <td>url</td>
+                                <td>{{ request.directUrl }}</td>
+                            </tr>
+                            <tr>
+                                <td>method</td>
+                                <td>{{ request.method }}</td>
+                            </tr>
+                            <tr>
+                                <td>headers</td>
+                                <td>
+                                    <textarea readonly="true" v-model="request.headers" rows="3"></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>body</td>
+                                <td>
+                                    <textarea readonly="true" v-model="request.body" rows="3"></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>protocol</td>
+                                <td>{{ request.protocol }}</td>
+                            </tr>
+                            <tr>
+                                <th colspan="2">Response</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    saved response
+                                </td>
+                                <td>
+                                    <select v-on:change="setSavedResponse(request, $event.target.value)">
+                                        <option value=""></option>
+                                        <option v-for="response in savedResponses" v-bind:value="response.id">
+                                            {{ response.name }}</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>response status code</td>
+                                <td>
+                                    <select v-model="request.responseStatusCode">
+                                        <option value="100">100 Continue</option>
+                                        <option value="101">101 Switching Protocols</option>
+                                        <option value="102">102 Processing</option>
+                                        <option value="200">200 OK</option>
+                                        <option value="201">201 Created</option>
+                                        <option value="202">202 Accepted</option>
+                                        <option value="203">203 Non-authoritative Information</option>
+                                        <option value="204">204 No Content</option>
+                                        <option value="205">205 Reset Content</option>
+                                        <option value="206">206 Partial Content</option>
+                                        <option value="207">207 Multi-Status</option>
+                                        <option value="208">208 Already Reported</option>
+                                        <option value="226">226 IM Used</option>
+                                        <option value="300">300 Multiple Choices</option>
+                                        <option value="301">301 Moved Permanently</option>
+                                        <option value="302">302 Found</option>
+                                        <option value="303">303 See Other</option>
+                                        <option value="304">304 Not Modified</option>
+                                        <option value="305">305 Use Proxy</option>
+                                        <option value="307">307 Temporary Redirect</option>
+                                        <option value="308">308 Permanent Redirect</option>
+                                        <option value="400">400 Bad Request</option>
+                                        <option value="401">401 Unauthorized</option>
+                                        <option value="402">402 Payment Required</option>
+                                        <option value="403">403 Forbidden</option>
+                                        <option value="404">404 Not Found</option>
+                                        <option value="405">405 Method Not Allowed</option>
+                                        <option value="406">406 Not Acceptable</option>
+                                        <option value="407">407 Proxy Authentication Required</option>
+                                        <option value="408">408 Request Timeout</option>
+                                        <option value="409">409 Conflict</option>
+                                        <option value="410">410 Gone</option>
+                                        <option value="411">411 Length Required</option>
+                                        <option value="412">412 Precondition Failed</option>
+                                        <option value="413">413 Payload Too Large</option>
+                                        <option value="414">414 Request-URI Too Long</option>
+                                        <option value="415">415 Unsupported Media Type</option>
+                                        <option value="416">416 Requested Range Not Satisfiable</option>
+                                        <option value="417">417 Expectation Failed</option>
+                                        <option value="418">418 I\'m a teapot</option>
+                                        <option value="421">421 Misdirected Request</option>
+                                        <option value="422">422 Unprocessable Entity</option>
+                                        <option value="423">423 Locked</option>
+                                        <option value="424">424 Failed Dependency</option>
+                                        <option value="426">426 Upgrade Required</option>
+                                        <option value="428">428 Precondition Required</option>
+                                        <option value="429">429 Too Many Requests</option>
+                                        <option value="431">431 Request Header Fields Too Large</option>
+                                        <option value="444">444 Connection Closed Without Response</option>
+                                        <option value="451">451 Unavailable For Legal Reasons</option>
+                                        <option value="499">499 Client Closed Request</option>
+                                        <option value="500">500 Internal Server Error</option>
+                                        <option value="501">501 Not Implemented</option>
+                                        <option value="502">502 Bad Gateway</option>
+                                        <option value="503">503 Service Unavailable</option>
+                                        <option value="504">504 Gateway Timeout</option>
+                                        <option value="505">505 HTTP Version Not Supported</option>
+                                        <option value="506">506 Variant Also Negotiates</option>
+                                        <option value="507">507 Insufficient Storage</option>
+                                        <option value="508">508 Loop Detected</option>
+                                        <option value="510">510 Not Extended</option>
+                                        <option value="511">511 Network Authentication Required</option>
+                                        <option value="599">599 Network Connect Timeout Error</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>response json</td>
+                                <td>
+                                    <textarea v-model="request.responseJson"></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!
+                                </td>
+                                <td v-else-if="request.status === 'Closed'">request closed by sender</td>
+                                <td v-else>
+                                    <button @click="sendResponse(request)">send response</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="request-group">
+            <h4>Completed requests</h4>
+            <div v-if="!completedRequests.length">(empty)</div>
+            <div class="requests">
+                <div v-for="request in completedRequests" class="req">
+                    <hr>
+                    <table class="table">
+                        <tr>
+                            <th colspan="2">Request</th>
+                        </tr>
+                        <tr>
+                            <td>date</td>
+                            <td>{{ request.date }}</td>
+                        </tr>
+                        <tr>
+                            <td>url</td>
+                            <td>{{ request.directUrl }}</td>
+                        </tr>
+                        <tr>
+                            <td>method</td>
+                            <td>{{ request.method }}</td>
+                        </tr>
+                        <tr>
+                            <td>headers</td>
+                            <td>
+                                <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>body</td>
+                            <td>
+                                <textarea readonly="true" v-model="request.body" rows="2"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>protocol</td>
+                            <td>{{ request.protocol }}</td>
+                        </tr>
+                        <tbody v-if="request.status === 'ResponseSent'">
+                            <tr>
+                                <th colspan="2">Response</th>
+                            </tr>
+                            <tr>
+                                <td>response status code</td>
+                                <td>{{ request.responseStatusCode }}</td>
+                            </tr>
+                            <tr>
+                                <td>response json</td>
+                                <td>{{ request.responseJson }}</td>
+                            </tr>
+                        </tbody>
+                        <tr>
+                            <td></td>
+                            <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!
+                            </td>
+                            <td v-else-if="request.status === 'Closed'">request closed by sender</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="response-editor-wrapper">
+        <button class="toggle-editor-btn" @click="toggleResponseEditor()">Response editor</button>
+        <response-editor v-if="responseEditorVisible" v-bind:saved-responses="savedResponses"
+            v-bind:selected-response-id="selectedResponseId" v-on:newresponse="newBlankResponse()">
+        </response-editor>
+    </div>
+</div>
+<link v-if="theme == 'sakura-dark'" rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css"
+    type="text/css">
+<link v-if="theme == 'sakura'" rel="stylesheet" v-bind:href="'https://unpkg.com/sakura.css/css/sakura.css'"
+    type="text/css">
+<link v-if="theme == 'sakura-dark-solarized'" rel="stylesheet"
+    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-dark-solarized.css'" type="text/css">
+<link v-if="theme == 'sakura-earthly'" rel="stylesheet"
+    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-earthly.css'" type="text/css">
+<link v-if="theme == 'sakura-ink'" rel="stylesheet"
+    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-ink.css'" type="text/css">
+<link v-if="theme == 'sakura-vader'" rel="stylesheet"
+    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-vader.css'" type="text/css">
+<link v-if="theme == 'water'" rel="stylesheet"
+    v-bind:href="'https://cdn.jsdelivr.net/npm/water.css@2/out/water.css'">
+<link v-if="theme == 'water-dark'" rel="stylesheet"
+    v-bind:href="'https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css'">
+<link v-if="theme == 'water-light'" rel="stylesheet"
+    v-bind:href="'https://cdn.jsdelivr.net/npm/water.css@2/out/light.css'">
+<link v-if="theme == 'tufte'" rel="stylesheet"
+    v-bind:href="'https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css'"
+    integrity="sha512-cG7Z4degp9718dDjGjeJmar0+g7RtE/olDe0VRKEFDtOEkm91JSvE7ZxN2+sijkU0AAK3e2xzu7bafBGC/uiqA=="
+    crossorigin="anonymous" />
+<link v-if="theme == 'milligram'" rel="stylesheet"
+    v-bind:href="'https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic'">
+<link v-if="theme == 'milligram'" rel="stylesheet"
+    v-bind:href="'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css'">
+<link v-if="theme == 'milligram'" rel="stylesheet"
+    v-bind:href="'https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css'">
+<link v-if="theme == 'mvp'" rel="stylesheet" v-bind:href="'https://unpkg.com/mvp.css'">
+<link v-if="theme == 'picnic'" rel="stylesheet"
+    v-bind:href="'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'"
+    integrity="sha256-ggCOEWlfIVaTFs5aAKOre2kSRmjN8U5Ml2ZpVyPkNkE=" crossorigin="anonymous">
+<link v-if="theme == 'mini'" rel="stylesheet"
+    v-bind:href="'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'" />
+<link v-if="theme == 'mini-dark'" rel="stylesheet"
+    v-bind:href="'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'" />
+<link v-if="theme == 'mini-nord'" rel="stylesheet"
+    v-bind:href="'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'" />
+    </div>
+    `
 });
 
 Vue.component('response-editor', {
