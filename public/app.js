@@ -2,15 +2,30 @@ const micromatch = require('micromatch');
 
 const app = new Vue({
     el: '#app',
-    data: {
-        serverId: '',
-        serverUrl: '',
-        requests: [],
-        savedResponses: [],
-        selectedResponseId: 0,
-        blinked: true,
-        responseEditorVisible: false,
-        theme: 'sakura-dark'
+    data: function () {
+        return {
+            serverId: '',
+            serverUrl: '',
+            requests: [],
+            savedResponses: this.readResponsesFromStorage() || [
+                this.createResponseProxy({
+                    id: 0,
+                    name: '200 {}',
+                    statusCode: 200,
+                    json: '{}'
+                }),
+                this.createResponseProxy({
+                    id: 1,
+                    name: '404 {}',
+                    statusCode: 404,
+                    json: '{}'
+                })
+            ],
+            selectedResponseId: 0,
+            blinked: true,
+            responseEditorVisible: false,
+            theme: 'sakura-dark'
+        }
     },
     computed: {
         awaitingRequests: function () {
@@ -54,6 +69,7 @@ const app = new Vue({
             }
             const newResp = { id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: createResponseName(statusCode, json), urlPattern: '' };
             this.savedResponses.push(newResp);
+            this.saveStorage();
         },
         createResponseName: function (statusCode, json) {
             return statusCode + ' ' + json.substring(0, 50);
@@ -62,6 +78,7 @@ const app = new Vue({
             const id = ++this.biggestResponseId;
             const newResp = { id: id, statusCode: 200, json: '{}', name: 'Response ' + this.biggestResponseId, urlPattern: '' };
             this.savedResponses.push(newResp);
+            this.saveStorage();
             this.selectedResponseId = id;
             // fetch('/predefined-response', {
             //     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
@@ -73,6 +90,23 @@ const app = new Vue({
         },
         toggleResponseEditor: function () {
             this.responseEditorVisible = !this.responseEditorVisible;
+        },
+        readResponsesFromStorage: function () {
+            const fromStorage = localStorage.getItem('savedResponses');
+            return fromStorage ? JSON.parse(fromStorage).map(x => this.createResponseProxy(x)) : null;
+        },
+        saveStorage: function () {
+            localStorage.setItem('savedResponses', JSON.stringify(this.savedResponses));
+        },
+        createResponseProxy: function (response) {
+            const that = this;
+            return new Proxy(response, {
+                set: function (obj, prop, value) {
+                    obj[prop] = value;
+                    that.saveStorage();
+                    return true;
+                }
+            });
         }
     }
 });
@@ -226,10 +260,8 @@ ws.onmessage = function (event) {
         } else if (message.serverId) {
             app.serverId = message.serverId;
             app.serverUrl = location.origin + '/' + message.serverId;
-            console.log(message.predefinedResponses);
-            app.savedResponses.push(...message.predefinedResponses);
         }
-    } catch (error) { 
+    } catch (error) {
         console.error(error);
     }
 }

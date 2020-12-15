@@ -45,17 +45,8 @@ interface IncomingResponse {
   json: string
 }
 
-interface PredefinedResponse {
-  id: number,
-  name: string,
-  urlPatter: string,
-  statusCode: number,
-  json: string
-}
-
 interface EndpointData {
-  serverId: string,
-  predefinedResponses: PredefinedResponse[]
+  serverId: string
 }
 
 interface RequestData {
@@ -80,7 +71,6 @@ wss.on('connection', (ws, request) => {
   const session = JSON.parse(Buffer.from(cookies.get('session') || '', 'base64').toString('utf8'));
   console.log(session);
   const serverId = session.serverId;
-  const predefinedResponses: PredefinedResponse[] = session.predefinedResponses;
   let connection: Connection;
   if (serverId in socketMap) {
     socketMap[serverId].ws.terminate();
@@ -90,7 +80,7 @@ wss.on('connection', (ws, request) => {
     connection = {serverId: serverId, responseMap: {}, lastRequestKey: 0, ws: ws};
     socketMap[serverId] = connection;
   }
-  const endpointData: EndpointData = { serverId: serverId, predefinedResponses: predefinedResponses };
+  const endpointData: EndpointData = { serverId: serverId };
   ws.send(JSON.stringify(endpointData));
 
   ws.on('message', message => {
@@ -120,48 +110,8 @@ app.get('/', (req, res) => {
     if (!req.session.serverId) {
       req.session.serverId = uuidv4();
     }
-    if (!req.session.predefinedResponses) {
-      req.session.predefinedResponses = [
-        {
-          id: 0,
-          name: '200 {}',
-          statusCode: 200,
-          json: '{}'
-        },
-        {
-          id: 1,
-          name: '404 {}',
-          statusCode: 404,
-          json: '{}'
-        }
-      ];
-    }
   }
   res.sendFile(path.join(__dirname, './public', 'index.html'));
-});
-
-app.post('/predefined-response', function (req, res) {
-  const predefinedResponse: PredefinedResponse = req.body;
-  if (req.session) {
-    req.session.predefinedResponses.push(predefinedResponse);
-    console.log(req.session);
-    res.status(201).send();
-    return;
-  }
-  res.status(500);
-});
-
-app.patch('/predefined-response', function (req, res) {
-  const predefinedResponse: PredefinedResponse = req.body;
-  if (req.session) {
-    let toModify = req.session.predefinedResponses.find((r: PredefinedResponse) => r.id == predefinedResponse.id);
-    if (toModify) {
-      toModify = Object.assign(toModify, predefinedResponse);
-      res.status(200);
-      return;
-    }
-  }
-  res.status(500);
 });
 
 app.use('/public', express.static('public'));
