@@ -12,12 +12,14 @@ const app = new Vue({
                     id: 0,
                     name: '200 {}',
                     statusCode: 200,
+                    urlPattern: '',
                     json: '{}'
                 }),
                 this.createResponseProxy({
                     id: 1,
                     name: '404 {}',
                     statusCode: 404,
+                    urlPattern: '',
                     json: '{}'
                 })
             ],
