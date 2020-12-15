@@ -26,7 +26,7 @@ const app = new Vue({
             selectedResponseId: 0,
             blinked: true,
             responseEditorVisible: false,
-            theme: 'sakura-dark'
+            theme: localStorage.getItem('theme') || 'sakura-dark'
         }
     },
     computed: {
@@ -44,6 +44,12 @@ const app = new Vue({
         setInterval(() => {
             this.blink();
         }, 500);
+    },
+    watch: {
+        theme: function (newVal) {
+            this.theme = newVal;
+            localStorage.setItem('theme', newVal);
+        }
     },
     methods: {
         sendResponse: function (request) {
