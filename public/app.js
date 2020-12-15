@@ -26,7 +26,7 @@ const app = new Vue({
             selectedResponseId: 0,
             blinked: true,
             responseEditorVisible: false,
-            theme: localStorage.getItem('theme') || 'sakura-dark'
+            theme: localStorage.getItem('theme') || 'sakura-vader'
         }
     },
     computed: {
