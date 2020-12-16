@@ -26,6 +26,7 @@ const app = new Vue({
             selectedResponseId: 0,
             blinked: true,
             responseEditorVisible: false,
+            wsStatus: 'DISCONNECTED',
             theme: localStorage.getItem('theme') || 'sakura-vader',
             themes: {
                 'sakura-dark': {
@@ -230,6 +231,9 @@ const app = new Vue({
     <div>
         <label>Your unique endpoint is</label><input v-model="serverUrl" readonly="true"
             onClick="this.select();" style="width: 100%" size="85" />
+    </div>
+    <div>
+        WebSocket status: {{ wsStatus }}
     </div>
     <div>
         Theme
@@ -584,6 +588,9 @@ let ws = connect();
 
 function connect() {
     let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+    ws.onopen = function (event) {
+        app.wsStatus = 'CONNECTED';
+    }
     ws.onmessage = function (event) {
         console.log(event);
         try {
@@ -617,11 +624,16 @@ function connect() {
             console.error(error);
         }
     }
+    ws.onclose = function (event) {
+        app.wsStatus = 'DISCONNECTED';
+        console.log('ws closed', event);
+    }
     return ws;
 }
 
 setInterval(() => {
     if (ws.readyState === WebSocket.CLOSED) {
+        app.wsStatus = 'RECONNECTING';
         console.log('WebSocket closed, reconnecting...');
         ws = connect();
     }
