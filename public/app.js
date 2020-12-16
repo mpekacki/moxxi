@@ -222,7 +222,7 @@ const app = new Vue({
                     if (prop === 'statusCode' || prop === 'json') {
                         const oldComputedName = that.createResponseName(obj.statusCode, obj.json);
                         console.log('oldComputedNAme', oldComputedName);
-                        if (obj.name === oldComputedName || obj.name === 'Response ' + obj.id) {
+                        if (obj.name === oldComputedName || obj.name === 'Response ' + obj.id || obj.name === '') {
                             obj.name = that.createResponseName(prop === 'statusCode' ? value : obj.statusCode, prop === 'json' ? value : obj.json);
                         }
                     }
