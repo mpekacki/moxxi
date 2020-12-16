@@ -28,56 +28,108 @@ const app = new Vue({
             responseEditorVisible: false,
             theme: localStorage.getItem('theme') || 'sakura-vader',
             themes: {
-                'sakura-dark': [
-                    'https://unpkg.com/sakura.css/css/sakura-dark.css'
-                ],
-                'sakura': [
-                    'https://unpkg.com/sakura.css/css/sakura.css'
-                ],
-                'sakura-dark-solarized': [
-                    'https://unpkg.com/sakura.css/css/sakura-dark-solarized.css'
-                ],
-                'sakura-earthly': [
-                    'https://unpkg.com/sakura.css/css/sakura-earthly.css'
-                ],
-                'sakura-ink': [
-                    'https://unpkg.com/sakura.css/css/sakura-ink.css'
-                ],
-                'sakura-vader': [
-                    'https://unpkg.com/sakura.css/css/sakura-vader.css'
-                ],
-                'water': [
-                    'https://cdn.jsdelivr.net/npm/water.css@2/out/water.css'
-                ],
-                'water-dark': [
-                    'https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css'
-                ],
-                'water-light': [
-                    'https://cdn.jsdelivr.net/npm/water.css@2/out/light.css'
-                ],
-                'tufte': [
-                    'https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css'
-                ],
-                'milligram': [
-                    'https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic',
-                    'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css',
-                    'https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css'
-                ],
-                'mvp': [
-                    'https://unpkg.com/mvp.css'
-                ],
-                'picnic': [
-                    'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'
-                ],
-                'mini': [
-                    'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'
-                ],
-                'mini-dark': [
-                    'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'
-                ],
-                'mini-nord': [
-                    'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'
-                ]
+                'sakura-dark': {
+                    name: 'sakura-dark', label: 'Sakura Dark', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-dark.css'
+                    ]
+                },
+                'sakura': {
+                    name: 'sakura', label: 'Sakura Light', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura.css'
+                    ]
+                },
+                'sakura-dark-solarized': {
+                    name: 'sakura-dark-solarized', label: 'Sakura Dark Solarized', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-dark-solarized.css'
+                    ]
+                },
+                'sakura-earthly': {
+                    name: 'sakura-earthly', label: 'Sakura Earthly', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-earthly.css'
+                    ]
+                },
+                'sakura-ink': {
+                    name: 'sakura-ink', label: 'Sakura Ink', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-ink.css'
+                    ]
+                },
+                'sakura-vader': {
+                    name: 'sakura-vader', label: 'Sakura Vader', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-vader.css'
+                    ]
+                },
+                'water': {
+                    name: 'water', label: 'Water', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/water.css@2/out/water.css'
+                    ]
+                },
+                'water-dark': {
+                    name: 'water-dark', label: 'Water Dark', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css'
+                    ]
+                },
+                'water-light': {
+                    name: 'water-light', label: 'Water Light', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/water.css@2/out/light.css'
+                    ]
+                },
+                'tufte': {
+                    name: 'tufte', label: 'Tufte', stylesheets: [
+                        'https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css'
+                    ]
+                },
+                'milligram': {
+                    name: 'milligram', label: 'MVP', stylesheets: [
+                        'https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic',
+                        'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css',
+                        'https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css'
+                    ]
+                },
+                'mvp': {
+                    name: 'mvp', label: 'Milligram', stylesheets: [
+                        'https://unpkg.com/mvp.css'
+                    ]
+                },
+                'picnic': {
+                    name: 'picnic', label: 'Picnic', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'
+                    ]
+                },
+                'mini': {
+                    name: 'mini', label: 'Mini', stylesheets: [
+                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'
+                    ]
+                },
+                'mini-dark': {
+                    name: 'mini-dark', label: 'Mini Dark', stylesheets: [
+                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'
+                    ]
+                },
+                'mini-nord': {
+                    name: 'mini-nord', label: 'Mini Nord', stylesheets: [
+                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'
+                    ]
+                },
+                'new-css': {
+                    name: 'new-css', label: 'new.css', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/@exampledev/new.css@1/new.min.css'
+                    ]
+                },
+                'awsm-css': {
+                    name: 'awsm-css', label: 'awsm.css', stylesheets: [
+                        'https://unpkg.com/awsm.css/dist/awsm.min.css'
+                    ]
+                },
+                'marx': {
+                    name: 'marx', label: 'Marx', stylesheets: [
+                        'https://unpkg.com/marx-css/css/marx.min.css'
+                    ]
+                },
+                'wing': {
+                    name: 'wing', label: 'Wing', stylesheets: [
+                        'https://unpkg.com/wingcss'
+                    ]
+                }
             }
         }
     },
@@ -182,22 +234,7 @@ const app = new Vue({
     <div>
         Theme
         <select v-model="theme">
-            <option value="sakura-dark">Sakura Dark</option>
-            <option value="sakura">Sakura Light</option>
-            <option value="sakura-dark-solarized">Sakura Dark Solarized</option>
-            <option value="sakura-earthly">Sakura Earthly</option>
-            <option value="sakura-ink">Sakura Ink</option>
-            <option value="sakura-vader">Sakura Vader</option>
-            <option value="water">Water</option>
-            <option value="water-dark">Water Dark</option>
-            <option value="water-light">Water Light</option>
-            <option value="tufte">Tufte</option>
-            <option value="mvp">MVP</option>
-            <option value="milligram">Milligram</option>
-            <option value="picnic">Picnic</option>
-            <option value="mini">Mini</option>
-            <option value="mini-dark">Mini Dark</option>
-            <option value="mini-nord">Mini Nord</option>
+            <option v-for="theme in themes" v-bind:value="theme.name">{{ theme.label }}</option>
         </select>
     </div>
 </header>
