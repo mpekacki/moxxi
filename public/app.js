@@ -580,37 +580,49 @@ Vue.component('response-editor', {
     `
 });
 
-const ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
-ws.onmessage = function (event) {
-    console.log(event);
-    try {
-        const message = JSON.parse(event.data);
-        if (message.requestKey) {
-            const request = message;
-            request.headers = JSON.stringify(request.headers, null, 2);
-            try {
-                request.body = JSON.stringify(request.body, null, 2);
-            } catch { }
-            const found = app.requests.find(r => r.requestKey === request.requestKey);
-            if (found) {
-                found = Object.assign(found, request);
-            } else {
-                request.responseStatusCode = 200;
-                request.responseJson = '{}';
-                app.requests.unshift(request);
+let ws = connect();
 
-                const autoResponse = app.savedResponses.find(r => r.urlPattern !== '' && micromatch.isMatch(request.directUrl, r.urlPattern));
-                if (autoResponse) {
-                    request.responseStatusCode = autoResponse.statusCode;
-                    request.responseJson = autoResponse.json;
-                    app.sendResponse(request);
+function connect() {
+    let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+    ws.onmessage = function (event) {
+        console.log(event);
+        try {
+            const message = JSON.parse(event.data);
+            if (message.requestKey) {
+                const request = message;
+                request.headers = JSON.stringify(request.headers, null, 2);
+                try {
+                    request.body = JSON.stringify(request.body, null, 2);
+                } catch { }
+                const found = app.requests.find(r => r.requestKey === request.requestKey);
+                if (found) {
+                    found = Object.assign(found, request);
+                } else {
+                    request.responseStatusCode = 200;
+                    request.responseJson = '{}';
+                    app.requests.unshift(request);
+
+                    const autoResponse = app.savedResponses.find(r => r.urlPattern !== '' && micromatch.isMatch(request.directUrl, r.urlPattern));
+                    if (autoResponse) {
+                        request.responseStatusCode = autoResponse.statusCode;
+                        request.responseJson = autoResponse.json;
+                        app.sendResponse(request);
+                    }
                 }
+            } else if (message.serverId) {
+                app.serverId = message.serverId;
+                app.serverUrl = location.origin + '/' + message.serverId;
             }
-        } else if (message.serverId) {
-            app.serverId = message.serverId;
-            app.serverUrl = location.origin + '/' + message.serverId;
+        } catch (error) {
+            console.error(error);
         }
-    } catch (error) {
-        console.error(error);
     }
+    return ws;
 }
+
+setInterval(() => {
+    if (ws.readyState === WebSocket.CLOSED) {
+        console.log('WebSocket closed, reconnecting...');
+        ws = connect();
+    }
+}, 10000);
