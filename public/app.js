@@ -26,7 +26,59 @@ const app = new Vue({
             selectedResponseId: 0,
             blinked: true,
             responseEditorVisible: false,
-            theme: localStorage.getItem('theme') || 'sakura-vader'
+            theme: localStorage.getItem('theme') || 'sakura-vader',
+            themes: {
+                'sakura-dark': [
+                    'https://unpkg.com/sakura.css/css/sakura-dark.css'
+                ],
+                'sakura': [
+                    'https://unpkg.com/sakura.css/css/sakura.css'
+                ],
+                'sakura-dark-solarized': [
+                    'https://unpkg.com/sakura.css/css/sakura-dark-solarized.css'
+                ],
+                'sakura-earthly': [
+                    'https://unpkg.com/sakura.css/css/sakura-earthly.css'
+                ],
+                'sakura-ink': [
+                    'https://unpkg.com/sakura.css/css/sakura-ink.css'
+                ],
+                'sakura-vader': [
+                    'https://unpkg.com/sakura.css/css/sakura-vader.css'
+                ],
+                'water': [
+                    'https://cdn.jsdelivr.net/npm/water.css@2/out/water.css'
+                ],
+                'water-dark': [
+                    'https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css'
+                ],
+                'water-light': [
+                    'https://cdn.jsdelivr.net/npm/water.css@2/out/light.css'
+                ],
+                'tufte': [
+                    'https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css'
+                ],
+                'milligram': [
+                    'https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic',
+                    'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css',
+                    'https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css'
+                ],
+                'mvp': [
+                    'https://unpkg.com/mvp.css'
+                ],
+                'picnic': [
+                    'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'
+                ],
+                'mini': [
+                    'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'
+                ],
+                'mini-dark': [
+                    'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'
+                ],
+                'mini-nord': [
+                    'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'
+                ]
+            }
         }
     },
     computed: {
@@ -38,6 +90,9 @@ const app = new Vue({
         },
         biggestResponseId: function () {
             return this.savedResponses.reduce((accumulator, currentValue) => currentValue.id > accumulator ? currentValue.id : accumulator, 0) || 0;
+        },
+        themeStylesheets: function () {
+            return this.themes[this.theme];
         }
     },
     created() {
@@ -363,44 +418,7 @@ const app = new Vue({
         </response-editor>
     </div>
 </div>
-<link v-if="theme == 'sakura-dark'" rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css"
-    type="text/css">
-<link v-if="theme == 'sakura'" rel="stylesheet" v-bind:href="'https://unpkg.com/sakura.css/css/sakura.css'"
-    type="text/css">
-<link v-if="theme == 'sakura-dark-solarized'" rel="stylesheet"
-    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-dark-solarized.css'" type="text/css">
-<link v-if="theme == 'sakura-earthly'" rel="stylesheet"
-    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-earthly.css'" type="text/css">
-<link v-if="theme == 'sakura-ink'" rel="stylesheet"
-    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-ink.css'" type="text/css">
-<link v-if="theme == 'sakura-vader'" rel="stylesheet"
-    v-bind:href="'https://unpkg.com/sakura.css/css/sakura-vader.css'" type="text/css">
-<link v-if="theme == 'water'" rel="stylesheet"
-    v-bind:href="'https://cdn.jsdelivr.net/npm/water.css@2/out/water.css'">
-<link v-if="theme == 'water-dark'" rel="stylesheet"
-    v-bind:href="'https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css'">
-<link v-if="theme == 'water-light'" rel="stylesheet"
-    v-bind:href="'https://cdn.jsdelivr.net/npm/water.css@2/out/light.css'">
-<link v-if="theme == 'tufte'" rel="stylesheet"
-    v-bind:href="'https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css'"
-    integrity="sha512-cG7Z4degp9718dDjGjeJmar0+g7RtE/olDe0VRKEFDtOEkm91JSvE7ZxN2+sijkU0AAK3e2xzu7bafBGC/uiqA=="
-    crossorigin="anonymous" />
-<link v-if="theme == 'milligram'" rel="stylesheet"
-    v-bind:href="'https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic'">
-<link v-if="theme == 'milligram'" rel="stylesheet"
-    v-bind:href="'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css'">
-<link v-if="theme == 'milligram'" rel="stylesheet"
-    v-bind:href="'https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css'">
-<link v-if="theme == 'mvp'" rel="stylesheet" v-bind:href="'https://unpkg.com/mvp.css'">
-<link v-if="theme == 'picnic'" rel="stylesheet"
-    v-bind:href="'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'"
-    integrity="sha256-ggCOEWlfIVaTFs5aAKOre2kSRmjN8U5Ml2ZpVyPkNkE=" crossorigin="anonymous">
-<link v-if="theme == 'mini'" rel="stylesheet"
-    v-bind:href="'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'" />
-<link v-if="theme == 'mini-dark'" rel="stylesheet"
-    v-bind:href="'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'" />
-<link v-if="theme == 'mini-nord'" rel="stylesheet"
-    v-bind:href="'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'" />
+    <link v-for="url in themeStylesheets" v-bind:href="url" rel="stylesheet" />
     </div>
     `
 });
