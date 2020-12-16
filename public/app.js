@@ -183,7 +183,7 @@ const app = new Vue({
             if (this.savedResponses.some(r => r.statusCode == statusCode && r.json == json)) {
                 return;
             }
-            const newResp = { id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: createResponseName(statusCode, json), urlPattern: '' };
+            const newResp = { id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: this.createResponseName(statusCode, json), urlPattern: '' };
             this.savedResponses.push(newResp);
             this.saveStorage();
         },
