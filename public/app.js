@@ -144,7 +144,7 @@ const app = new Vue({
             return this.savedResponses.reduce((accumulator, currentValue) => currentValue.id > accumulator ? currentValue.id : accumulator, 0) || 0;
         },
         themeStylesheets: function () {
-            return this.themes[this.theme];
+            return this.themes[this.theme].stylesheets;
         }
     },
     created() {
