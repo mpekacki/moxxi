@@ -192,7 +192,7 @@ const app = new Vue({
         },
         newBlankResponse: function () {
             const id = ++this.biggestResponseId;
-            const newResp = { id: id, statusCode: 200, json: '{}', name: 'Response ' + this.biggestResponseId, urlPattern: '' };
+            const newResp = this.createResponseProxy({ id: id, statusCode: 200, json: '{}', name: 'Response ' + id, urlPattern: '' });
             this.savedResponses.push(newResp);
             this.saveStorage();
             this.selectedResponseId = id;
@@ -218,6 +218,14 @@ const app = new Vue({
             const that = this;
             return new Proxy(response, {
                 set: function (obj, prop, value) {
+                    console.log(obj, prop, value);
+                    if (prop === 'statusCode' || prop === 'json') {
+                        const oldComputedName = that.createResponseName(obj.statusCode, obj.json);
+                        console.log('oldComputedNAme', oldComputedName);
+                        if (obj.name === oldComputedName || obj.name === 'Response ' + obj.id) {
+                            obj.name = that.createResponseName(prop === 'statusCode' ? value : obj.statusCode, prop === 'json' ? value : obj.json);
+                        }
+                    }
                     obj[prop] = value;
                     that.saveStorage();
                     return true;
