@@ -609,7 +609,7 @@ function connect() {
                 try {
                     request.body = JSON.stringify(request.body, null, 2);
                 } catch { }
-                const found = app.requests.find(r => r.requestKey === request.requestKey);
+                let found = app.requests.find(r => r.requestKey === request.requestKey);
                 if (found) {
                     found = Object.assign(found, request);
                 } else {
