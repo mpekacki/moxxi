@@ -467,7 +467,7 @@ const app = new Vue({
         </response-editor>
     </div>
 </div>
-    <link v-for="url in themeStylesheets" v-bind:href="url" rel="stylesheet" />
+    <link v-for="url in themeStylesheets" v-bind:href="url" rel="stylesheet" type="text/css" />
     </div>
     `
 });
