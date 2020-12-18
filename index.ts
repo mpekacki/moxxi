@@ -73,7 +73,6 @@ wss.on('connection', (ws, request) => {
   const serverId = session.serverId;
   let connection: Connection;
   if (serverId in socketMap) {
-    socketMap[serverId].ws.terminate();
     socketMap[serverId].ws = ws;
     connection = socketMap[serverId];
   } else {

@@ -29,7 +29,6 @@ wss.on('connection', function (ws, request) {
     var serverId = session.serverId;
     var connection;
     if (serverId in socketMap) {
-        socketMap[serverId].ws.terminate();
         socketMap[serverId].ws = ws;
         connection = socketMap[serverId];
     }
