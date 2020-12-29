@@ -28,7 +28,7 @@ interface Connection {
   serverId: string,
   responseMap: ResponseMap,
   lastRequestKey: number,
-  ws: WebSocket
+  websockets: WebSocket[]
 }
 
 interface ConnectionMap {
@@ -73,10 +73,10 @@ wss.on('connection', (ws, request) => {
   const serverId = session.serverId;
   let connection: Connection;
   if (serverId in socketMap) {
-    socketMap[serverId].ws = ws;
+    socketMap[serverId].websockets.push(ws);
     connection = socketMap[serverId];
   } else {
-    connection = {serverId: serverId, responseMap: {}, lastRequestKey: 0, ws: ws};
+    connection = { serverId: serverId, responseMap: {}, lastRequestKey: 0, websockets: [ws] };
     socketMap[serverId] = connection;
   }
   const endpointData: EndpointData = { serverId: serverId };
@@ -93,7 +93,7 @@ wss.on('connection', (ws, request) => {
     } catch {
         contents = incomingResponse.json;
     }
-    res.status(incomingResponse.statusCode).send(contents);
+    res.status(incomingResponse.statusCode).send(contents).end();
   });
 
   ws.ping();
@@ -101,6 +101,17 @@ wss.on('connection', (ws, request) => {
       setTimeout(() => {
           ws.ping();
       }, 45000);
+  });
+
+  ws.on('close', () => {
+    console.log(serverId + ' closed!');
+    // remove ws from server data
+    connection.websockets = connection.websockets.filter(element => element != ws);
+    if (connection.websockets.length === 0) {
+      console.log('removing ' + serverId + ' because empty');
+      delete socketMap[serverId];
+      console.log('active servers: ' + Object.keys(socketMap));
+    }
   });
 });
 
@@ -126,11 +137,11 @@ app.all('/:serverId*', (req, res) => {
     directUrl = '/';
   }
   const requestData: RequestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, directUrl: directUrl, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol, status: 'Open', date: new Date() };
-  connection.ws.send(JSON.stringify(requestData));
+  connection.websockets.forEach(ws => ws.send(JSON.stringify(requestData)));
 
   req.on('aborted', () => {
     requestData.status = 'Closed';
-    connection.ws.send(JSON.stringify(requestData));
+    connection.websockets.forEach(ws => ws.send(JSON.stringify(requestData)));
   });
 });
 
