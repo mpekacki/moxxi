@@ -446,7 +446,9 @@ const app = new Vue({
                                     </tr>
                                     <tr>
                                         <td>response json</td>
-                                        <td>{{ request.responseJson }}</td>
+                                        <td>
+                                            <textarea readonly="true" v-model="request.responseJson" rows="2"></textarea>
+                                        </td>
                                     </tr>
                                 </tbody>
                                 <tr>
