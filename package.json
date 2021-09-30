@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "node test.js",
-    "build": "browserify ./public/app.js -o ./public/bundle.js && tsc"
+    "build": "npx browserify ./public/app.js -o ./public/bundle.js && tsc"
   },
   "dependencies": {
     "cookie-session": "^1.4.0",
