@@ -75,6 +75,7 @@ app.get('/', function (req, res) {
     if (req.session) {
         if (!req.session.serverId) {
             req.session.serverId = uuid_1.v4();
+            console.log('initialized new server: ' + req.session.serverId);
         }
     }
     res.sendFile(path.join(__dirname, './public', 'index.html'));

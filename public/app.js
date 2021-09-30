@@ -175,6 +175,10 @@ const app = new Vue({
                 request.responseStatusCode = found.statusCode;
                 request.responseJson = found.json;
             }
+            return found;
+        },
+        sendSavedResponse: function (request, selectedResponseId) {
+            this.setSavedResponse(request, selectedResponseId) && this.sendResponse(request);
         },
         saveResponse: function (statusCode, json) {
             try {
@@ -305,6 +309,13 @@ const app = new Vue({
                                                 <option v-for="response in savedResponses" v-bind:value="response.id">
                                                     {{ response.name }}</option>
                                             </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">
+                                            <button v-for="response in savedResponses" v-on:click="sendSavedResponse(request, response.id)">
+                                                {{ response.name }}
+                                            </button>
                                         </td>
                                     </tr>
                                     <tr>

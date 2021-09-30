@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "node test.js"
+    "test": "node test.js",
+    "build": "browserify ./public/app.js -o ./public/bundle.js && tsc"
   },
   "dependencies": {
     "cookie-session": "^1.4.0",
@@ -26,6 +27,7 @@
     "@types/uuid": "^8.3.0",
     "@types/vue": "^2.0.0",
     "@types/ws": "^7.4.0",
+    "browserify": "^17.0.0",
     "got": "^11.3.0",
     "tape": "^4.7.0",
     "typescript": "^4.1.2",
