@@ -1,5 +1,12 @@
 const micromatch = require('micromatch');
 
+const TimeAgo = require('javascript-time-ago');
+const en = require('javascript-time-ago/locale/en.json');
+
+TimeAgo.addDefaultLocale(en);
+
+const timeAgo = new TimeAgo('en-US');
+
 const app = new Vue({
     el: '#app',
     data: function () {
@@ -152,6 +159,9 @@ const app = new Vue({
         setInterval(() => {
             this.blink();
         }, 500);
+        setInterval(() => {
+            this.refreshTimesAgo();
+        }, 10000);
     },
     watch: {
         theme: function (newVal) {
@@ -207,6 +217,11 @@ const app = new Vue({
         },
         blink: function () {
             this.blinked = !this.blinked;
+        },
+        refreshTimesAgo: function () {
+            this.requests.map(request => {
+                request.timeAgo = timeAgo.format(new Date(request.date));
+            });
         },
         toggleResponseEditor: function () {
             this.responseEditorVisible = !this.responseEditorVisible;
@@ -421,7 +436,7 @@ const app = new Vue({
                                 </tr>
                                 <tr>
                                     <td>date</td>
-                                    <td>{{ request.date }}</td>
+                                    <td>{{ request.date }} {{ request.timeAgo }}</td>
                                 </tr>
                                 <tr>
                                     <td>url</td>
@@ -465,6 +480,7 @@ const app = new Vue({
                                 <tr>
                                     <td></td>
                                     <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!
+                                        <span v-if="request.autoResponseName"> (automatic: {{ request.autoResponseName }})</span>
                                     </td>
                                     <td v-else-if="request.status === 'Closed'">request closed by sender</td>
                                 </tr>
@@ -618,6 +634,7 @@ function connect() {
             const message = JSON.parse(event.data);
             if (message.requestKey) {
                 const request = message;
+                request.timeAgo = timeAgo.format(new Date(request.date));
                 request.headers = JSON.stringify(request.headers, null, 2);
                 try {
                     request.body = JSON.stringify(request.body, null, 2);
@@ -634,6 +651,7 @@ function connect() {
                     if (autoResponse) {
                         request.responseStatusCode = autoResponse.statusCode;
                         request.responseJson = autoResponse.json;
+                        request.autoResponseName = autoResponse.name;
                         app.sendResponse(request);
                     }
                 }
