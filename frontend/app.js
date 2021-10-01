@@ -297,6 +297,13 @@ const app = new Vue({
                                         <th colspan="2">Response</th>
                                     </tr>
                                     <tr>
+                                        <td colspan="2" class="quick-responses">
+                                            <button v-for="response in savedResponses" v-on:click="sendSavedResponse(request, response.id)">
+                                                {{ response.name }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td>
                                             saved response
                                         </td>
@@ -306,13 +313,6 @@ const app = new Vue({
                                                 <option v-for="response in savedResponses" v-bind:value="response.id">
                                                     {{ response.name }}</option>
                                             </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2" class="quick-responses">
-                                            <button v-for="response in savedResponses" v-on:click="sendSavedResponse(request, response.id)">
-                                                {{ response.name }}
-                                            </button>
                                         </td>
                                     </tr>
                                     <tr>
