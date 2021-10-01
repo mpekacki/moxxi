@@ -104,21 +104,6 @@ const app = new Vue({
                         'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'
                     ]
                 },
-                'mini': {
-                    name: 'mini', label: 'Mini', stylesheets: [
-                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'
-                    ]
-                },
-                'mini-dark': {
-                    name: 'mini-dark', label: 'Mini Dark', stylesheets: [
-                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'
-                    ]
-                },
-                'mini-nord': {
-                    name: 'mini-nord', label: 'Mini Nord', stylesheets: [
-                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'
-                    ]
-                },
                 'new-css': {
                     name: 'new-css', label: 'new.css', stylesheets: [
                         'https://cdn.jsdelivr.net/npm/@exampledev/new.css@1/new.min.css'
