@@ -13,7 +13,10 @@ var PORT = process.env.PORT || 5000;
 var app = express();
 var server = http.createServer(app);
 var wss = new WebSocket.Server({ server: server });
+// Provide config vars with secret keys to enable session (which contains unique endpoint ID) continuity between app restarts.
+// More info about keys: http://expressjs.com/en/resources/middleware/cookie-session.html
 var keys = [process.env.KEY0 || uuid_1.v4(), process.env.KEY1 || uuid_1.v4()];
+var responseBodyAllowed = !!process.env.BODY_ALLOWED;
 app.use(cookieSession({
     name: 'session',
     keys: keys
@@ -36,7 +39,7 @@ wss.on('connection', function (ws, request) {
         connection = { serverId: serverId, responseMap: {}, lastRequestKey: 0, websockets: [ws] };
         socketMap[serverId] = connection;
     }
-    var endpointData = { serverId: serverId };
+    var endpointData = { serverId: serverId, responseBodyAllowed: responseBodyAllowed };
     ws.send(JSON.stringify(endpointData));
     ws.on('message', function (message) {
         var incomingResponse = JSON.parse(message);
@@ -46,11 +49,16 @@ wss.on('connection', function (ws, request) {
         if (res.headersSent)
             return;
         var contents;
-        try {
-            contents = JSON.parse(incomingResponse.json);
+        if (responseBodyAllowed) {
+            try {
+                contents = JSON.parse(incomingResponse.json);
+            }
+            catch (_a) {
+                contents = incomingResponse.json;
+            }
         }
-        catch (_a) {
-            contents = incomingResponse.json;
+        else {
+            contents = {};
         }
         res.status(incomingResponse.statusCode).send(contents).end();
     });

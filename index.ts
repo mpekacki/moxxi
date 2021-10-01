@@ -13,7 +13,11 @@ const app: express.Application = express();
 const server = http.createServer(app);
 const wss: WebSocket.Server = new WebSocket.Server({ server: server });
 
+// Provide config vars with secret keys to enable session (which contains unique endpoint ID) continuity between app restarts.
+// More info about keys: http://expressjs.com/en/resources/middleware/cookie-session.html
 const keys = [process.env.KEY0 || uuidv4(), process.env.KEY1 || uuidv4()];
+
+const responseBodyAllowed = !!process.env.BODY_ALLOWED;
 
 app.use(cookieSession({
   name: 'session',
@@ -46,7 +50,8 @@ interface IncomingResponse {
 }
 
 interface EndpointData {
-  serverId: string
+  serverId: string,
+  responseBodyAllowed: boolean
 }
 
 interface RequestData {
@@ -79,7 +84,7 @@ wss.on('connection', (ws, request) => {
     connection = { serverId: serverId, responseMap: {}, lastRequestKey: 0, websockets: [ws] };
     socketMap[serverId] = connection;
   }
-  const endpointData: EndpointData = { serverId: serverId };
+  const endpointData: EndpointData = { serverId: serverId, responseBodyAllowed: responseBodyAllowed };
   ws.send(JSON.stringify(endpointData));
 
   ws.on('message', message => {
@@ -88,10 +93,14 @@ wss.on('connection', (ws, request) => {
     const res = connection.responseMap[incomingResponse.requestKey];
     if (res.headersSent) return;
     let contents;
-    try {
-        contents = JSON.parse(incomingResponse.json);
-    } catch {
-        contents = incomingResponse.json;
+    if (responseBodyAllowed) {
+      try {
+          contents = JSON.parse(incomingResponse.json);
+      } catch {
+          contents = incomingResponse.json;
+      }
+    } else {
+      contents = {};
     }
     res.status(incomingResponse.statusCode).send(contents).end();
   });

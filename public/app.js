@@ -13,6 +13,7 @@ const app = new Vue({
         return {
             serverId: '',
             serverUrl: '',
+            responseBodyAllowed: false,
             requests: [],
             savedResponses: this.readResponsesFromStorage() || [
                 this.createResponseProxy({
@@ -406,7 +407,8 @@ const app = new Vue({
                                     <tr>
                                         <td>response json</td>
                                         <td>
-                                            <textarea v-model="request.responseJson"></textarea>
+                                            <textarea v-if="responseBodyAllowed" v-model="request.responseJson"></textarea>
+                                            <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
                                         </td>
                                     </tr>
                                     <tr>
@@ -521,7 +523,7 @@ Vue.component('response-editor', {
             this.responses = newVal;
         }
     },
-    props: ['savedResponses', 'selectedResponseId'],
+    props: ['savedResponses', 'selectedResponseId', 'responseBodyAllowed'],
     template: `
         <form class="form">
             <div class="form-control" style="flex: 1 100%">
@@ -615,7 +617,8 @@ Vue.component('response-editor', {
             </div>
             <div class="form-control">
                 <label>response json</label>
-                    <textarea v-model="selectedResponse.json"></textarea>
+                <textarea v-if="responseBodyAllowed" v-model="selectedResponse.json"></textarea>
+                <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
             </div>
         </form>
     `
@@ -632,7 +635,7 @@ function connect() {
         console.log(event);
         try {
             const message = JSON.parse(event.data);
-            if (message.requestKey) {
+            if (message.requestKey) { // incoming request
                 const request = message;
                 request.timeAgo = timeAgo.format(new Date(request.date));
                 request.headers = JSON.stringify(request.headers, null, 2);
@@ -655,9 +658,10 @@ function connect() {
                         app.sendResponse(request);
                     }
                 }
-            } else if (message.serverId) {
+            } else if (message.serverId) { // WS initialization
                 app.serverId = message.serverId;
                 app.serverUrl = location.origin + '/' + message.serverId;
+                app.responseBodyAllowed = message.responseBodyAllowed;
             }
         } catch (error) {
             console.error(error);
