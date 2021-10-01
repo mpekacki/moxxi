@@ -419,7 +419,7 @@ const app = new Vue({
                                 </tr>
                                 <tr>
                                     <td>date</td>
-                                    <td>{{ request.date }} {{ request.timeAgo }}</td>
+                                    <td>{{ request.date }}<br/>{{ request.timeAgo }}</td>
                                 </tr>
                                 <tr>
                                     <td>url</td>
