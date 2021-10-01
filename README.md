@@ -1,6 +1,6 @@
 # moxxi-mocks
 
-Simple response mocker, useful for testing API callouts etc..
+Simple HTTP response mocker, useful for testing API callouts etc..
 
 ## Running Locally
 
