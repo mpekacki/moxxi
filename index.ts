@@ -176,9 +176,11 @@ app.all("/:serverId*", (req, res) => {
   };
   connection.websockets.forEach((ws) => ws.send(JSON.stringify(requestData)));
 
-  req.on("aborted", () => {
-    requestData.status = "Closed";
-    connection.websockets.forEach((ws) => ws.send(JSON.stringify(requestData)));
+  req.on("close", () => {
+    if (req.aborted) {
+      requestData.status = "Closed";
+      connection.websockets.forEach((ws) => ws.send(JSON.stringify(requestData)));
+    }
   });
 });
 
