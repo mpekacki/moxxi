@@ -211,10 +211,6 @@ const app = new Vue({
             this.savedResponses.push(newResp);
             this.saveStorage();
             this.selectedResponseId = id;
-            // fetch('/predefined-response', {
-            //     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(newResp)
-            // }).then(r => console.log(r));
         },
         blink: function () {
             this.blinked = !this.blinked;
@@ -405,7 +401,7 @@ const app = new Vue({
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>response json</td>
+                                        <td>response body</td>
                                         <td>
                                             <textarea v-if="responseBodyAllowed" v-model="request.responseJson"></textarea>
                                             <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
@@ -473,7 +469,7 @@ const app = new Vue({
                                         <td>{{ request.responseStatusCode }}</td>
                                     </tr>
                                     <tr>
-                                        <td>response json</td>
+                                        <td>response body</td>
                                         <td>
                                             <textarea readonly="true" v-model="request.responseJson" rows="2"></textarea>
                                         </td>
@@ -617,7 +613,7 @@ Vue.component('response-editor', {
                     </select>
             </div>
             <div class="form-control">
-                <label>response json</label>
+                <label>response body</label>
                 <textarea v-if="responseBodyAllowed" v-model="selectedResponse.json"></textarea>
                 <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
             </div>
