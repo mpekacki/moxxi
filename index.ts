@@ -16,7 +16,7 @@ const wss: WebSocket.Server = new WebSocket.Server({ server: server });
 // More info about keys: http://expressjs.com/en/resources/middleware/cookie-session.html
 const keys = [process.env.KEY0 || uuidv4(), process.env.KEY1 || uuidv4()];
 
-const responseBodyAllowed = !!process.env.BODY_ALLOWED;
+const responseBodyAllowed = !!process.env.ALLOW_BODY;
 
 app.use(
   cookieSession({
