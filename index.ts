@@ -103,6 +103,7 @@ wss.on('connection', (ws, request) => {
       contents = {};
     }
     res.status(incomingResponse.statusCode).send(contents).end();
+    delete connection.responseMap[incomingResponse.requestKey];
   });
 
   ws.ping();
