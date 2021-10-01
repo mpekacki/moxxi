@@ -1,10 +1,10 @@
-import express = require('express');
-import WebSocket = require('ws');
-import http = require('http');
-import { v4 as uuidv4 } from 'uuid';
-import cookieSession = require('cookie-session');
-import path = require('path');
-import Cookies = require('cookies');
+import express = require("express");
+import WebSocket = require("ws");
+import http = require("http");
+import { v4 as uuidv4 } from "uuid";
+import cookieSession = require("cookie-session");
+import path = require("path");
+import Cookies = require("cookies");
 
 const PORT = process.env.PORT || 5000;
 // Create a new express application instance
@@ -18,61 +18,65 @@ const keys = [process.env.KEY0 || uuidv4(), process.env.KEY1 || uuidv4()];
 
 const responseBodyAllowed = !!process.env.BODY_ALLOWED;
 
-app.use(cookieSession({
-  name: 'session',
-  keys: keys
-}));
+app.use(
+  cookieSession({
+    name: "session",
+    keys: keys,
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.text());
 
 interface Connection {
-  serverId: string,
-  responseMap: ResponseMap,
-  lastRequestKey: number,
-  websockets: WebSocket[]
+  serverId: string;
+  responseMap: ResponseMap;
+  lastRequestKey: number;
+  websockets: WebSocket[];
 }
 
 interface ConnectionMap {
-  [key: string]: Connection
+  [key: string]: Connection;
 }
 
 interface ResponseMap {
-  [key: number]: express.Response
+  [key: number]: express.Response;
 }
 
 interface IncomingResponse {
-  requestKey: number,
-  statusCode: number,
-  json: string
+  requestKey: number;
+  statusCode: number;
+  json: string;
 }
 
 interface EndpointData {
-  serverId: string,
-  responseBodyAllowed: boolean
+  serverId: string;
+  responseBodyAllowed: boolean;
 }
 
 interface RequestData {
-  serverId: string,
-  requestKey: number,
-  url: string,
-  directUrl: string,
-  method: string,
-  headers: object,
-  params: object,
-  body: string,
-  ip: string,
-  protocol: string,
-  status: string,
-  date: Date
+  serverId: string;
+  requestKey: number;
+  url: string;
+  directUrl: string;
+  method: string;
+  headers: object;
+  params: object;
+  body: string;
+  ip: string;
+  protocol: string;
+  status: string;
+  date: Date;
 }
 
 const socketMap: ConnectionMap = {};
 
-wss.on('connection', (ws, request) => {
+wss.on("connection", (ws, request) => {
   const cookies = new Cookies(request, new http.ServerResponse(request), keys);
-  const session = JSON.parse(Buffer.from(cookies.get('session') || '', 'base64').toString('utf8'));
+  const session = JSON.parse(
+    Buffer.from(cookies.get("session") || "", "base64").toString("utf8")
+  );
   console.log(session);
   const serverId = session.serverId;
   let connection: Connection;
@@ -80,13 +84,21 @@ wss.on('connection', (ws, request) => {
     socketMap[serverId].websockets.push(ws);
     connection = socketMap[serverId];
   } else {
-    connection = { serverId: serverId, responseMap: {}, lastRequestKey: 0, websockets: [ws] };
+    connection = {
+      serverId: serverId,
+      responseMap: {},
+      lastRequestKey: 0,
+      websockets: [ws],
+    };
     socketMap[serverId] = connection;
   }
-  const endpointData: EndpointData = { serverId: serverId, responseBodyAllowed: responseBodyAllowed };
+  const endpointData: EndpointData = {
+    serverId: serverId,
+    responseBodyAllowed: responseBodyAllowed,
+  };
   ws.send(JSON.stringify(endpointData));
 
-  ws.on('message', message => {
+  ws.on("message", (message) => {
     const incomingResponse: IncomingResponse = JSON.parse(<string>message);
     if (!(incomingResponse.requestKey in connection.responseMap)) return;
     const res = connection.responseMap[incomingResponse.requestKey];
@@ -94,9 +106,9 @@ wss.on('connection', (ws, request) => {
     let contents;
     if (responseBodyAllowed) {
       try {
-          contents = JSON.parse(incomingResponse.json);
+        contents = JSON.parse(incomingResponse.json);
       } catch {
-          contents = incomingResponse.json;
+        contents = incomingResponse.json;
       }
     } else {
       contents = {};
@@ -106,52 +118,67 @@ wss.on('connection', (ws, request) => {
   });
 
   ws.ping();
-  ws.on('pong', () => {
-      setTimeout(() => {
-          ws.ping();
-      }, 45000);
+  ws.on("pong", () => {
+    setTimeout(() => {
+      ws.ping();
+    }, 45000);
   });
 
-  ws.on('close', () => {
-    console.log(serverId + ' closed!');
+  ws.on("close", () => {
+    console.log(serverId + " closed!");
     // remove ws from server data
-    connection.websockets = connection.websockets.filter(element => element != ws);
+    connection.websockets = connection.websockets.filter(
+      (element) => element != ws
+    );
     if (connection.websockets.length === 0) {
-      console.log('removing ' + serverId + ' because empty');
+      console.log("removing " + serverId + " because empty");
       delete socketMap[serverId];
-      console.log('active servers: ' + Object.keys(socketMap));
+      console.log("active servers: " + Object.keys(socketMap));
     }
   });
 });
 
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   if (req.session) {
     if (!req.session.serverId) {
       req.session.serverId = uuidv4();
-      console.log('initialized new server: ' + req.session.serverId);
+      console.log("initialized new server: " + req.session.serverId);
     }
   }
-  res.sendFile(path.join(__dirname, './public', 'index.html'));
+  res.sendFile(path.join(__dirname, "./public", "index.html"));
 });
 
-app.use('/public', express.static('public'));
+app.use("/public", express.static("public"));
 
-app.all('/:serverId*', (req, res) => {
+app.all("/:serverId*", (req, res) => {
   const serverId = req.params.serverId;
   if (!(serverId in socketMap)) return;
   const connection = socketMap[serverId];
   const requestKey = ++connection.lastRequestKey;
   connection.responseMap[requestKey] = res;
   let directUrl = req.url.substring(serverId.length + 1);
-  if (directUrl == '') {
-    directUrl = '/';
+  if (directUrl == "") {
+    directUrl = "/";
   }
-  const requestData: RequestData = { serverId: serverId, requestKey: requestKey, method: req.method, url: req.url, directUrl: directUrl, headers: req.headers, params: req.params, body: req.body, ip: req.ip, protocol: req.protocol, status: 'Open', date: new Date() };
-  connection.websockets.forEach(ws => ws.send(JSON.stringify(requestData)));
+  const requestData: RequestData = {
+    serverId: serverId,
+    requestKey: requestKey,
+    method: req.method,
+    url: req.url,
+    directUrl: directUrl,
+    headers: req.headers,
+    params: req.params,
+    body: req.body,
+    ip: req.ip,
+    protocol: req.protocol,
+    status: "Open",
+    date: new Date(),
+  };
+  connection.websockets.forEach((ws) => ws.send(JSON.stringify(requestData)));
 
-  req.on('aborted', () => {
-    requestData.status = 'Closed';
-    connection.websockets.forEach(ws => ws.send(JSON.stringify(requestData)));
+  req.on("aborted", () => {
+    requestData.status = "Closed";
+    connection.websockets.forEach((ws) => ws.send(JSON.stringify(requestData)));
   });
 });
 
