@@ -1,4 +1,685 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const micromatch = require('micromatch');
+
+const TimeAgo = require('javascript-time-ago');
+const en = require('javascript-time-ago/locale/en.json');
+
+TimeAgo.addDefaultLocale(en);
+
+const timeAgo = new TimeAgo('en-US');
+
+const app = new Vue({
+    el: '#app',
+    data: function () {
+        return {
+            serverId: '',
+            serverUrl: '',
+            responseBodyAllowed: false,
+            requests: [],
+            savedResponses: this.readResponsesFromStorage() || [
+                this.createResponseProxy({
+                    id: 0,
+                    name: '200 {}',
+                    statusCode: 200,
+                    urlPattern: '',
+                    json: '{}'
+                }),
+                this.createResponseProxy({
+                    id: 1,
+                    name: '404 {}',
+                    statusCode: 404,
+                    urlPattern: '',
+                    json: '{}'
+                })
+            ],
+            selectedResponseId: 0,
+            blinked: true,
+            responseEditorVisible: false,
+            wsStatus: 'DISCONNECTED',
+            theme: localStorage.getItem('theme') || 'sakura-vader',
+            themes: {
+                'sakura-dark': {
+                    name: 'sakura-dark', label: 'Sakura Dark', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-dark.css'
+                    ]
+                },
+                'sakura': {
+                    name: 'sakura', label: 'Sakura Light', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura.css'
+                    ]
+                },
+                'sakura-dark-solarized': {
+                    name: 'sakura-dark-solarized', label: 'Sakura Dark Solarized', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-dark-solarized.css'
+                    ]
+                },
+                'sakura-earthly': {
+                    name: 'sakura-earthly', label: 'Sakura Earthly', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-earthly.css'
+                    ]
+                },
+                'sakura-ink': {
+                    name: 'sakura-ink', label: 'Sakura Ink', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-ink.css'
+                    ]
+                },
+                'sakura-vader': {
+                    name: 'sakura-vader', label: 'Sakura Vader', stylesheets: [
+                        'https://unpkg.com/sakura.css/css/sakura-vader.css'
+                    ]
+                },
+                'water': {
+                    name: 'water', label: 'Water', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/water.css@2/out/water.css'
+                    ]
+                },
+                'water-dark': {
+                    name: 'water-dark', label: 'Water Dark', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css'
+                    ]
+                },
+                'water-light': {
+                    name: 'water-light', label: 'Water Light', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/water.css@2/out/light.css'
+                    ]
+                },
+                'tufte': {
+                    name: 'tufte', label: 'Tufte', stylesheets: [
+                        'https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css'
+                    ]
+                },
+                'milligram': {
+                    name: 'milligram', label: 'Milligram', stylesheets: [
+                        'https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic',
+                        'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css',
+                        'https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css'
+                    ]
+                },
+                'mvp': {
+                    name: 'mvp', label: 'MVP', stylesheets: [
+                        'https://unpkg.com/mvp.css'
+                    ]
+                },
+                'picnic': {
+                    name: 'picnic', label: 'Picnic', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'
+                    ]
+                },
+                'mini': {
+                    name: 'mini', label: 'Mini', stylesheets: [
+                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'
+                    ]
+                },
+                'mini-dark': {
+                    name: 'mini-dark', label: 'Mini Dark', stylesheets: [
+                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'
+                    ]
+                },
+                'mini-nord': {
+                    name: 'mini-nord', label: 'Mini Nord', stylesheets: [
+                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'
+                    ]
+                },
+                'new-css': {
+                    name: 'new-css', label: 'new.css', stylesheets: [
+                        'https://cdn.jsdelivr.net/npm/@exampledev/new.css@1/new.min.css'
+                    ]
+                },
+                'awsm-css': {
+                    name: 'awsm-css', label: 'awsm.css', stylesheets: [
+                        'https://unpkg.com/awsm.css/dist/awsm.min.css'
+                    ]
+                },
+                'marx': {
+                    name: 'marx', label: 'Marx', stylesheets: [
+                        'https://unpkg.com/marx-css/css/marx.min.css'
+                    ]
+                },
+                'wing': {
+                    name: 'wing', label: 'Wing', stylesheets: [
+                        'https://unpkg.com/wingcss'
+                    ]
+                }
+            }
+        }
+    },
+    computed: {
+        awaitingRequests: function () {
+            return this.requests.filter(r => r.status === 'Open');
+        },
+        completedRequests: function () {
+            return this.requests.filter(r => r.status !== 'Open');
+        },
+        biggestResponseId: function () {
+            return this.savedResponses.reduce((accumulator, currentValue) => currentValue.id > accumulator ? currentValue.id : accumulator, 0) || 0;
+        },
+        themeStylesheets: function () {
+            return this.themes[this.theme].stylesheets;
+        }
+    },
+    created() {
+        setInterval(() => {
+            this.blink();
+        }, 500);
+        setInterval(() => {
+            this.refreshTimesAgo();
+        }, 10000);
+    },
+    watch: {
+        theme: function (newVal) {
+            this.theme = newVal;
+            localStorage.setItem('theme', newVal);
+        }
+    },
+    methods: {
+        sendResponse: function (request) {
+            ws.send(JSON.stringify({
+                requestKey: request.requestKey,
+                statusCode: request.responseStatusCode,
+                json: request.responseJson
+            }));
+            request.status = 'ResponseSent';
+            this.saveResponse(request.responseStatusCode, request.responseJson);
+        },
+        setSavedResponse: function (request, selectedResponseId) {
+            const found = this.savedResponses.find(r => r.id == selectedResponseId);
+            if (found) {
+                request.responseStatusCode = found.statusCode;
+                request.responseJson = found.json;
+            }
+            return found;
+        },
+        sendSavedResponse: function (request, selectedResponseId) {
+            this.setSavedResponse(request, selectedResponseId) && this.sendResponse(request);
+        },
+        saveResponse: function (statusCode, json) {
+            try {
+                json = JSON.stringify(JSON.parse(json))
+            } catch { }
+            if (this.savedResponses.some(r => r.statusCode == statusCode && r.json == json)) {
+                return;
+            }
+            const newResp = { id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: this.createResponseName(statusCode, json), urlPattern: '' };
+            this.savedResponses.push(newResp);
+            this.saveStorage();
+        },
+        createResponseName: function (statusCode, json) {
+            return statusCode + ' ' + json.substring(0, 50);
+        },
+        newBlankResponse: function () {
+            const id = ++this.biggestResponseId;
+            const newResp = this.createResponseProxy({ id: id, statusCode: 200, json: '{}', name: 'Response ' + id, urlPattern: '' });
+            this.savedResponses.push(newResp);
+            this.saveStorage();
+            this.selectedResponseId = id;
+        },
+        blink: function () {
+            this.blinked = !this.blinked;
+        },
+        refreshTimesAgo: function () {
+            this.requests.map(request => {
+                request.timeAgo = timeAgo.format(new Date(request.date));
+            });
+        },
+        toggleResponseEditor: function () {
+            this.responseEditorVisible = !this.responseEditorVisible;
+        },
+        readResponsesFromStorage: function () {
+            const fromStorage = localStorage.getItem('savedResponses');
+            return fromStorage ? JSON.parse(fromStorage).map(x => this.createResponseProxy(x)) : null;
+        },
+        saveStorage: function () {
+            localStorage.setItem('savedResponses', JSON.stringify(this.savedResponses));
+        },
+        createResponseProxy: function (response) {
+            const that = this;
+            return new Proxy(response, {
+                set: function (obj, prop, value) {
+                    console.log(obj, prop, value);
+                    if (prop === 'statusCode' || prop === 'json') {
+                        const oldComputedName = that.createResponseName(obj.statusCode, obj.json);
+                        console.log('oldComputedNAme', oldComputedName);
+                        if (obj.name === oldComputedName || obj.name === 'Response ' + obj.id || obj.name === '') {
+                            obj.name = that.createResponseName(prop === 'statusCode' ? value : obj.statusCode, prop === 'json' ? value : obj.json);
+                        }
+                    }
+                    obj[prop] = value;
+                    that.saveStorage();
+                    return true;
+                }
+            });
+        }
+    },
+    template: `
+    <div>
+        <header class="header">
+            <div>
+                <label>Your unique endpoint is</label><input v-model="serverUrl" readonly="true"
+                    onClick="this.select();" style="width: 100%" size="85" />
+            </div>
+            <div>
+                WebSocket status: {{ wsStatus }}
+            </div>
+            <div>
+                Theme
+                <select v-model="theme">
+                    <option v-for="theme in themes" v-bind:value="theme.name">{{ theme.label }}</option>
+                </select>
+            </div>
+        </header>
+        <hr>
+        <div class="app-content">
+            <div class="all-requests">
+                <div class="request-group">
+                    <h4>Awaiting requests</h4>
+                    <div v-if="!awaitingRequests.length">requests made to your endpoint will appear here</div>
+                    <div class="requests">
+                        <div v-for="request in awaitingRequests" class="req">
+                            <hr>
+                            <div v-bind:class="{ blink: blinked, offblink: !blinked }">
+                                <table>
+                                    <tr>
+                                        <th colspan="2">Request</th>
+                                    </tr>
+                                    <tr>
+                                        <td>date</td>
+                                        <td>{{ request.date }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>url</td>
+                                        <td class="url">{{ request.directUrl }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>method</td>
+                                        <td>{{ request.method }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>headers</td>
+                                        <td>
+                                            <textarea readonly="true" v-model="request.headers" rows="3"></textarea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>body</td>
+                                        <td>
+                                            <textarea readonly="true" v-model="request.body" rows="3"></textarea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>protocol</td>
+                                        <td>{{ request.protocol }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="2">Response</th>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            saved response
+                                        </td>
+                                        <td>
+                                            <select v-on:change="setSavedResponse(request, $event.target.value)">
+                                                <option value=""></option>
+                                                <option v-for="response in savedResponses" v-bind:value="response.id">
+                                                    {{ response.name }}</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" class="quick-responses">
+                                            <button v-for="response in savedResponses" v-on:click="sendSavedResponse(request, response.id)">
+                                                {{ response.name }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>response status code</td>
+                                        <td>
+                                            <select v-model="request.responseStatusCode">
+                                                <option value="100">100 Continue</option>
+                                                <option value="101">101 Switching Protocols</option>
+                                                <option value="102">102 Processing</option>
+                                                <option value="200">200 OK</option>
+                                                <option value="201">201 Created</option>
+                                                <option value="202">202 Accepted</option>
+                                                <option value="203">203 Non-authoritative Information</option>
+                                                <option value="204">204 No Content</option>
+                                                <option value="205">205 Reset Content</option>
+                                                <option value="206">206 Partial Content</option>
+                                                <option value="207">207 Multi-Status</option>
+                                                <option value="208">208 Already Reported</option>
+                                                <option value="226">226 IM Used</option>
+                                                <option value="300">300 Multiple Choices</option>
+                                                <option value="301">301 Moved Permanently</option>
+                                                <option value="302">302 Found</option>
+                                                <option value="303">303 See Other</option>
+                                                <option value="304">304 Not Modified</option>
+                                                <option value="305">305 Use Proxy</option>
+                                                <option value="307">307 Temporary Redirect</option>
+                                                <option value="308">308 Permanent Redirect</option>
+                                                <option value="400">400 Bad Request</option>
+                                                <option value="401">401 Unauthorized</option>
+                                                <option value="402">402 Payment Required</option>
+                                                <option value="403">403 Forbidden</option>
+                                                <option value="404">404 Not Found</option>
+                                                <option value="405">405 Method Not Allowed</option>
+                                                <option value="406">406 Not Acceptable</option>
+                                                <option value="407">407 Proxy Authentication Required</option>
+                                                <option value="408">408 Request Timeout</option>
+                                                <option value="409">409 Conflict</option>
+                                                <option value="410">410 Gone</option>
+                                                <option value="411">411 Length Required</option>
+                                                <option value="412">412 Precondition Failed</option>
+                                                <option value="413">413 Payload Too Large</option>
+                                                <option value="414">414 Request-URI Too Long</option>
+                                                <option value="415">415 Unsupported Media Type</option>
+                                                <option value="416">416 Requested Range Not Satisfiable</option>
+                                                <option value="417">417 Expectation Failed</option>
+                                                <option value="418">418 I\'m a teapot</option>
+                                                <option value="421">421 Misdirected Request</option>
+                                                <option value="422">422 Unprocessable Entity</option>
+                                                <option value="423">423 Locked</option>
+                                                <option value="424">424 Failed Dependency</option>
+                                                <option value="426">426 Upgrade Required</option>
+                                                <option value="428">428 Precondition Required</option>
+                                                <option value="429">429 Too Many Requests</option>
+                                                <option value="431">431 Request Header Fields Too Large</option>
+                                                <option value="444">444 Connection Closed Without Response</option>
+                                                <option value="451">451 Unavailable For Legal Reasons</option>
+                                                <option value="499">499 Client Closed Request</option>
+                                                <option value="500">500 Internal Server Error</option>
+                                                <option value="501">501 Not Implemented</option>
+                                                <option value="502">502 Bad Gateway</option>
+                                                <option value="503">503 Service Unavailable</option>
+                                                <option value="504">504 Gateway Timeout</option>
+                                                <option value="505">505 HTTP Version Not Supported</option>
+                                                <option value="506">506 Variant Also Negotiates</option>
+                                                <option value="507">507 Insufficient Storage</option>
+                                                <option value="508">508 Loop Detected</option>
+                                                <option value="510">510 Not Extended</option>
+                                                <option value="511">511 Network Authentication Required</option>
+                                                <option value="599">599 Network Connect Timeout Error</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>response body</td>
+                                        <td>
+                                            <textarea v-if="responseBodyAllowed" v-model="request.responseJson"></textarea>
+                                            <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!
+                                        </td>
+                                        <td v-else-if="request.status === 'Closed'">request closed by sender</td>
+                                        <td v-else>
+                                            <button @click="sendResponse(request)">send response</button>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="request-group">
+                    <h4>Completed requests</h4>
+                    <div v-if="!completedRequests.length">(empty)</div>
+                    <div class="requests">
+                        <div v-for="request in completedRequests" class="req">
+                            <hr>
+                            <table class="table">
+                                <tr>
+                                    <th colspan="2">Request</th>
+                                </tr>
+                                <tr>
+                                    <td>date</td>
+                                    <td>{{ request.date }} {{ request.timeAgo }}</td>
+                                </tr>
+                                <tr>
+                                    <td>url</td>
+                                    <td class="url">{{ request.directUrl }}</td>
+                                </tr>
+                                <tr>
+                                    <td>method</td>
+                                    <td>{{ request.method }}</td>
+                                </tr>
+                                <tr>
+                                    <td>headers</td>
+                                    <td>
+                                        <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>body</td>
+                                    <td>
+                                        <textarea readonly="true" v-model="request.body" rows="2"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>protocol</td>
+                                    <td>{{ request.protocol }}</td>
+                                </tr>
+                                <tbody v-if="request.status === 'ResponseSent'">
+                                    <tr>
+                                        <th colspan="2">Response</th>
+                                    </tr>
+                                    <tr>
+                                        <td>response status code</td>
+                                        <td>{{ request.responseStatusCode }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>response body</td>
+                                        <td>
+                                            <textarea readonly="true" v-model="request.responseJson" rows="2"></textarea>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tr>
+                                    <td></td>
+                                    <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!
+                                        <span v-if="request.autoResponseName"> (automatic: {{ request.autoResponseName }})</span>
+                                    </td>
+                                    <td v-else-if="request.status === 'Closed'">request closed by sender</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="response-editor-wrapper">
+                <button class="toggle-editor-btn" @click="toggleResponseEditor()">Response editor</button>
+                <response-editor v-if="responseEditorVisible" v-bind:saved-responses="savedResponses"
+                    v-bind:selected-response-id="selectedResponseId" v-bind:response-body-allowed="responseBodyAllowed"
+                    v-on:newresponse="newBlankResponse()">
+                </response-editor>
+            </div>
+        </div>
+        <link v-for="url in themeStylesheets" v-bind:href="url" rel="stylesheet" type="text/css" />
+    </div>
+    `
+});
+
+Vue.component('response-editor', {
+    data: function () {
+        return {
+            responses: this.savedResponses,
+            selectedRespId: this.selectedResponseId
+        }
+    },
+    computed: {
+        selectedResponse: function () {
+            return this.responses ? this.responses.find(r => r.id === this.selectedRespId) : {}
+        }
+    },
+    watch: {
+        selectedResponseId: function (newVal) {
+            this.selectedRespId = newVal;
+        },
+        selectedResponses: function (newVal) {
+            this.responses = newVal;
+        }
+    },
+    props: ['savedResponses', 'selectedResponseId', 'responseBodyAllowed'],
+    template: `
+        <form class="form">
+            <div class="form-control" style="flex: 1 100%">
+                <label>
+                    saved response
+                </label>
+                    <select v-model="selectedRespId">
+                        <option v-for="response in responses" v-bind:value="response.id">{{ response.name }}</option>
+                    </select>
+                    <button v-on:click="$emit('newresponse'); $event.preventDefault();">New</button>
+            </div>
+            <div class="form-control" v-if="selectedResponse">
+                <label>
+                    name
+                </label>
+                    <input v-model="selectedResponse.name"></input>
+            </div>
+            <div class="form-control" v-if="selectedResponse">
+                <label>
+                    url pattern for auto-response
+                </label>
+                    <input v-model="selectedResponse.urlPattern"></input>
+            </div>
+            <div class="form-control">
+                <label>response status code</label>
+                    <select v-model="selectedResponse.statusCode">
+                        <option value="100">100 Continue</option>
+                        <option value="101">101 Switching Protocols</option>
+                        <option value="102">102 Processing</option>
+                        <option value="200">200 OK</option>
+                        <option value="201">201 Created</option>
+                        <option value="202">202 Accepted</option>
+                        <option value="203">203 Non-authoritative Information</option>
+                        <option value="204">204 No Content</option>
+                        <option value="205">205 Reset Content</option>
+                        <option value="206">206 Partial Content</option>
+                        <option value="207">207 Multi-Status</option>
+                        <option value="208">208 Already Reported</option>
+                        <option value="226">226 IM Used</option>
+                        <option value="300">300 Multiple Choices</option>
+                        <option value="301">301 Moved Permanently</option>
+                        <option value="302">302 Found</option>
+                        <option value="303">303 See Other</option>
+                        <option value="304">304 Not Modified</option>
+                        <option value="305">305 Use Proxy</option>
+                        <option value="307">307 Temporary Redirect</option>
+                        <option value="308">308 Permanent Redirect</option>
+                        <option value="400">400 Bad Request</option>
+                        <option value="401">401 Unauthorized</option>
+                        <option value="402">402 Payment Required</option>
+                        <option value="403">403 Forbidden</option>
+                        <option value="404">404 Not Found</option>
+                        <option value="405">405 Method Not Allowed</option>
+                        <option value="406">406 Not Acceptable</option>
+                        <option value="407">407 Proxy Authentication Required</option>
+                        <option value="408">408 Request Timeout</option>
+                        <option value="409">409 Conflict</option>
+                        <option value="410">410 Gone</option>
+                        <option value="411">411 Length Required</option>
+                        <option value="412">412 Precondition Failed</option>
+                        <option value="413">413 Payload Too Large</option>
+                        <option value="414">414 Request-URI Too Long</option>
+                        <option value="415">415 Unsupported Media Type</option>
+                        <option value="416">416 Requested Range Not Satisfiable</option>
+                        <option value="417">417 Expectation Failed</option>
+                        <option value="418">418 I\'m a teapot</option>
+                        <option value="421">421 Misdirected Request</option>
+                        <option value="422">422 Unprocessable Entity</option>
+                        <option value="423">423 Locked</option>
+                        <option value="424">424 Failed Dependency</option>
+                        <option value="426">426 Upgrade Required</option>
+                        <option value="428">428 Precondition Required</option>
+                        <option value="429">429 Too Many Requests</option>
+                        <option value="431">431 Request Header Fields Too Large</option>
+                        <option value="444">444 Connection Closed Without Response</option>
+                        <option value="451">451 Unavailable For Legal Reasons</option>
+                        <option value="499">499 Client Closed Request</option>
+                        <option value="500">500 Internal Server Error</option>
+                        <option value="501">501 Not Implemented</option>
+                        <option value="502">502 Bad Gateway</option>
+                        <option value="503">503 Service Unavailable</option>
+                        <option value="504">504 Gateway Timeout</option>
+                        <option value="505">505 HTTP Version Not Supported</option>
+                        <option value="506">506 Variant Also Negotiates</option>
+                        <option value="507">507 Insufficient Storage</option>
+                        <option value="508">508 Loop Detected</option>
+                        <option value="510">510 Not Extended</option>
+                        <option value="511">511 Network Authentication Required</option>
+                        <option value="599">599 Network Connect Timeout Error</option>
+                    </select>
+            </div>
+            <div class="form-control">
+                <label>response body</label>
+                <textarea v-if="responseBodyAllowed" v-model="selectedResponse.json"></textarea>
+                <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
+            </div>
+        </form>
+    `
+});
+
+let ws = connect();
+
+function connect() {
+    let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+    ws.onopen = function (event) {
+        app.wsStatus = 'CONNECTED';
+    }
+    ws.onmessage = function (event) {
+        console.log(event);
+        try {
+            const message = JSON.parse(event.data);
+            if (message.requestKey) { // incoming request
+                const request = message;
+                request.timeAgo = timeAgo.format(new Date(request.date));
+                request.headers = JSON.stringify(request.headers, null, 2);
+                try {
+                    request.body = JSON.stringify(request.body, null, 2);
+                } catch { }
+                let found = app.requests.find(r => r.requestKey === request.requestKey);
+                if (found) {
+                    found = Object.assign(found, request);
+                } else {
+                    request.responseStatusCode = 200;
+                    request.responseJson = '{}';
+                    app.requests.unshift(request);
+
+                    const autoResponse = app.savedResponses.find(r => r.urlPattern !== '' && micromatch.isMatch(request.directUrl, r.urlPattern));
+                    if (autoResponse) {
+                        request.responseStatusCode = autoResponse.statusCode;
+                        request.responseJson = autoResponse.json;
+                        request.autoResponseName = autoResponse.name;
+                        app.sendResponse(request);
+                    }
+                }
+            } else if (message.serverId) { // WS initialization
+                app.serverId = message.serverId;
+                app.serverUrl = location.origin + '/' + message.serverId;
+                app.responseBodyAllowed = message.responseBodyAllowed;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    ws.onclose = function (event) {
+        app.wsStatus = 'DISCONNECTED';
+        console.log('ws closed', event);
+    }
+    return ws;
+}
+
+setInterval(() => {
+    if (ws.readyState === WebSocket.CLOSED) {
+        app.wsStatus = 'RECONNECTING';
+        console.log('WebSocket closed, reconnecting...');
+        ws = connect();
+    }
+}, 10000);
+},{"javascript-time-ago":58,"javascript-time-ago/locale/en.json":59,"micromatch":60}],2:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -29,7 +710,7 @@ module.exports = function availableTypedArrays() {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 const stringify = require('./lib/stringify');
@@ -201,7 +882,7 @@ braces.create = (input, options = {}) => {
 
 module.exports = braces;
 
-},{"./lib/compile":3,"./lib/expand":5,"./lib/parse":6,"./lib/stringify":7}],3:[function(require,module,exports){
+},{"./lib/compile":4,"./lib/expand":6,"./lib/parse":7,"./lib/stringify":8}],4:[function(require,module,exports){
 'use strict';
 
 const fill = require('fill-range');
@@ -260,7 +941,7 @@ const compile = (ast, options = {}) => {
 
 module.exports = compile;
 
-},{"./utils":8,"fill-range":12}],4:[function(require,module,exports){
+},{"./utils":9,"fill-range":13}],5:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -319,7 +1000,7 @@ module.exports = {
   CHAR_ZERO_WIDTH_NOBREAK_SPACE: '\uFEFF' /* \uFEFF */
 };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 const fill = require('fill-range');
@@ -434,7 +1115,7 @@ const expand = (ast, options = {}) => {
 
 module.exports = expand;
 
-},{"./stringify":7,"./utils":8,"fill-range":12}],6:[function(require,module,exports){
+},{"./stringify":8,"./utils":9,"fill-range":13}],7:[function(require,module,exports){
 'use strict';
 
 const stringify = require('./stringify');
@@ -769,7 +1450,7 @@ const parse = (input, options = {}) => {
 
 module.exports = parse;
 
-},{"./constants":4,"./stringify":7}],7:[function(require,module,exports){
+},{"./constants":5,"./stringify":8}],8:[function(require,module,exports){
 'use strict';
 
 const utils = require('./utils');
@@ -803,7 +1484,7 @@ module.exports = (ast, options = {}) => {
 };
 
 
-},{"./utils":8}],8:[function(require,module,exports){
+},{"./utils":9}],9:[function(require,module,exports){
 'use strict';
 
 exports.isInteger = num => {
@@ -917,7 +1598,7 @@ exports.flatten = (...args) => {
   return result;
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -934,7 +1615,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":10,"get-intrinsic":16}],10:[function(require,module,exports){
+},{"./":11,"get-intrinsic":17}],11:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -983,7 +1664,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":15,"get-intrinsic":16}],11:[function(require,module,exports){
+},{"function-bind":16,"get-intrinsic":17}],12:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -1000,7 +1681,7 @@ if ($gOPD) {
 
 module.exports = $gOPD;
 
-},{"get-intrinsic":16}],12:[function(require,module,exports){
+},{"get-intrinsic":17}],13:[function(require,module,exports){
 /*!
  * fill-range <https://github.com/jonschlinkert/fill-range>
  *
@@ -1251,7 +1932,7 @@ const fill = (start, end, step, options = {}) => {
 
 module.exports = fill;
 
-},{"to-regex-range":75,"util":78}],13:[function(require,module,exports){
+},{"to-regex-range":76,"util":79}],14:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -1275,7 +1956,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -1329,14 +2010,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":14}],16:[function(require,module,exports){
+},{"./implementation":15}],17:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -1668,7 +2349,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":15,"has":20,"has-symbols":17}],17:[function(require,module,exports){
+},{"function-bind":16,"has":21,"has-symbols":18}],18:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -1683,7 +2364,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":18}],18:[function(require,module,exports){
+},{"./shams":19}],19:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -1727,7 +2408,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var hasSymbols = require('has-symbols/shams');
@@ -1736,14 +2417,14 @@ module.exports = function hasToStringTagShams() {
 	return hasSymbols() && !!Symbol.toStringTag;
 };
 
-},{"has-symbols/shams":18}],20:[function(require,module,exports){
+},{"has-symbols/shams":19}],21:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":15}],21:[function(require,module,exports){
+},{"function-bind":16}],22:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1768,7 +2449,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var hasToStringTag = typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol';
@@ -1801,7 +2482,7 @@ isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
 
 module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -1841,7 +2522,7 @@ module.exports = function isGeneratorFunction(fn) {
 	return getProto(fn) === GeneratorFunction;
 };
 
-},{"has-tostringtag/shams":19}],24:[function(require,module,exports){
+},{"has-tostringtag/shams":20}],25:[function(require,module,exports){
 /*!
  * is-number <https://github.com/jonschlinkert/is-number>
  *
@@ -1861,7 +2542,7 @@ module.exports = function(num) {
   return false;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -1925,7 +2606,7 @@ module.exports = function isTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":1,"call-bind/callBound":9,"es-abstract/helpers/getOwnPropertyDescriptor":11,"foreach":13,"has-tostringtag/shams":19}],26:[function(require,module,exports){
+},{"available-typed-arrays":2,"call-bind/callBound":10,"es-abstract/helpers/getOwnPropertyDescriptor":12,"foreach":14,"has-tostringtag/shams":20}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1951,7 +2632,7 @@ function addLocaleData(localeData) {
   localesData[localeData.locale] = localeData;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2625,7 +3306,7 @@ function isStyleObject(object) {
   typeof object.custom === 'function');
 }
 
-},{"./LocaleDataStore":26,"./cache":28,"./locale":29,"./round":30,"./steps/getStep":32,"./steps/getStepDenominator":33,"./steps/getTimeToNextUpdate":35,"./style/getStyleByName":44,"./style/roundMinute":51,"relative-time-format":74}],28:[function(require,module,exports){
+},{"./LocaleDataStore":27,"./cache":29,"./locale":30,"./round":31,"./steps/getStep":33,"./steps/getStepDenominator":34,"./steps/getTimeToNextUpdate":36,"./style/getStyleByName":45,"./style/roundMinute":52,"relative-time-format":75}],29:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2710,7 +3391,7 @@ function () {
 
 exports.default = Cache;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2801,7 +3482,7 @@ function intlDateTimeFormatSupported() {
   return isIntlAvailable && typeof Intl.DateTimeFormat === 'function';
 }
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2835,7 +3516,7 @@ function getDiffRatioToNextRoundedNumber(round) {
   }
 }
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2969,7 +3650,7 @@ var _default = [{
 }];
 exports.default = _default;
 
-},{"./units":41}],32:[function(require,module,exports){
+},{"./units":42}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3141,7 +3822,7 @@ function filterStepsByUnits(steps, units) {
   });
 }
 
-},{"../round":30,"./getStepDenominator":33,"./getStepMinTime":34}],33:[function(require,module,exports){
+},{"../round":31,"./getStepDenominator":34,"./getStepMinTime":35}],34:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3161,7 +3842,7 @@ function getStepDenominator(step) {
   return (0, _units.getSecondsInUnit)(step.unit || step.formatAs) || 1;
 }
 
-},{"./units":41}],34:[function(require,module,exports){
+},{"./units":42}],35:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3286,7 +3967,7 @@ function _getMinTimeForUnit(toUnit, fromUnit, _ref2) {
   }
 }
 
-},{"../round":30,"./units":41}],35:[function(require,module,exports){
+},{"../round":31,"./units":42}],36:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3474,7 +4155,7 @@ function getTimeToStepChange(step, timestamp, _ref3) {
   }
 }
 
-},{"../round":30,"./getStepMinTime":34,"./getTimeToNextUpdateForUnit":36}],36:[function(require,module,exports){
+},{"../round":31,"./getStepMinTime":35,"./getTimeToNextUpdateForUnit":37}],37:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3533,7 +4214,7 @@ function getDiffToPreviousRoundedNumber(round, unitDenominator) {
   return (1 - (0, _round.getDiffRatioToNextRoundedNumber)(round)) * unitDenominator + 1;
 }
 
-},{"../round":30,"./units":41}],37:[function(require,module,exports){
+},{"../round":31,"./units":42}],38:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3566,7 +4247,7 @@ function getDate(value) {
   return value instanceof Date ? value : new Date(value);
 }
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3649,7 +4330,7 @@ var _helpers = require("./helpers");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./approximate":31,"./helpers":37,"./round":40,"./units":41}],39:[function(require,module,exports){
+},{"./approximate":32,"./helpers":38,"./round":41,"./units":42}],40:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3696,7 +4377,7 @@ function _default(step_) {
   return step;
 }
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3750,7 +4431,7 @@ var _default = [{
 }];
 exports.default = _default;
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3821,7 +4502,7 @@ function getSecondsInUnit(unit) {
 // 	}
 // }
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3849,7 +4530,7 @@ var _default = {
 };
 exports.default = _default;
 
-},{"../steps/approximate":31}],43:[function(require,module,exports){
+},{"../steps/approximate":32}],44:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3900,7 +4581,7 @@ var _default = {
 };
 exports.default = _default;
 
-},{"../steps/approximate":31}],44:[function(require,module,exports){
+},{"../steps/approximate":32}],45:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3989,7 +4670,7 @@ function getStyleByName(style) {
   }
 }
 
-},{"./approximate":42,"./approximateTime":43,"./mini":45,"./miniMinute":46,"./miniMinuteNow":47,"./miniNow":48,"./round":50,"./roundMinute":51,"./twitter":52,"./twitterFirstMinute":53,"./twitterMinute":54,"./twitterMinuteNow":55,"./twitterNow":56}],45:[function(require,module,exports){
+},{"./approximate":43,"./approximateTime":44,"./mini":46,"./miniMinute":47,"./miniMinuteNow":48,"./miniNow":49,"./round":51,"./roundMinute":52,"./twitter":53,"./twitterFirstMinute":54,"./twitterMinute":55,"./twitterMinuteNow":56,"./twitterNow":57}],46:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4024,7 +4705,7 @@ var _default = {
 };
 exports.default = _default;
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4049,7 +4730,7 @@ var _default = _objectSpread({}, _mini.default, {
 
 exports.default = _default;
 
-},{"./mini":45}],47:[function(require,module,exports){
+},{"./mini":46}],48:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4074,7 +4755,7 @@ var _default = _objectSpread({}, _miniMinute.default, {
 
 exports.default = _default;
 
-},{"./miniMinute":46}],48:[function(require,module,exports){
+},{"./miniMinute":47}],49:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4099,7 +4780,7 @@ var _default = _objectSpread({}, _mini.default, {
 
 exports.default = _default;
 
-},{"./mini":45}],49:[function(require,module,exports){
+},{"./mini":46}],50:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4133,7 +4814,7 @@ function _default(style_) {
   return style;
 }
 
-},{"../steps/renameLegacyProperties":39}],50:[function(require,module,exports){
+},{"../steps/renameLegacyProperties":40}],51:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4184,7 +4865,7 @@ var _default = {
 };
 exports.default = _default;
 
-},{"../steps/round":40}],51:[function(require,module,exports){
+},{"../steps/round":41}],52:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4238,7 +4919,7 @@ var _default = _objectSpread({}, _round.default, {
 
 exports.default = _default;
 
-},{"./round":50}],52:[function(require,module,exports){
+},{"./round":51}],53:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4386,7 +5067,7 @@ var _default = {
 };
 exports.default = _default;
 
-},{"../locale":29,"../steps":38,"./renameLegacyProperties":49}],53:[function(require,module,exports){
+},{"../locale":30,"../steps":39,"./renameLegacyProperties":50}],54:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4418,7 +5099,7 @@ var _default = _objectSpread({}, _twitter.default, {
 
 exports.default = _default;
 
-},{"../steps/units":41,"./twitter":52}],54:[function(require,module,exports){
+},{"../steps/units":42,"./twitter":53}],55:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4443,7 +5124,7 @@ var _default = _objectSpread({}, _twitter.default, {
 
 exports.default = _default;
 
-},{"./twitter":52}],55:[function(require,module,exports){
+},{"./twitter":53}],56:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4468,7 +5149,7 @@ var _default = _objectSpread({}, _twitterMinute.default, {
 
 exports.default = _default;
 
-},{"./twitterMinute":54}],56:[function(require,module,exports){
+},{"./twitterMinute":55}],57:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4493,7 +5174,7 @@ var _default = _objectSpread({}, _twitter.default, {
 
 exports.default = _default;
 
-},{"./twitter":52}],57:[function(require,module,exports){
+},{"./twitter":53}],58:[function(require,module,exports){
 'use strict'
 
 exports = module.exports = require('./commonjs/TimeAgo').default
@@ -4503,7 +5184,7 @@ var locale = require('./commonjs/locale')
 
 exports.intlDateTimeFormatSupported = locale.intlDateTimeFormatSupported
 exports.intlDateTimeFormatSupportedLocale = locale.intlDateTimeFormatSupportedLocale
-},{"./commonjs/TimeAgo":27,"./commonjs/locale":29}],58:[function(require,module,exports){
+},{"./commonjs/TimeAgo":28,"./commonjs/locale":30}],59:[function(require,module,exports){
 module.exports={
 	"locale": "en",
 	"long": {
@@ -4794,7 +5475,7 @@ module.exports={
 		}
 	}
 }
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 
 const util = require('util');
@@ -5263,7 +5944,7 @@ micromatch.braceExpand = (pattern, options) => {
 
 module.exports = micromatch;
 
-},{"braces":2,"picomatch":61,"picomatch/lib/utils":66,"util":78}],60:[function(require,module,exports){
+},{"braces":3,"picomatch":62,"picomatch/lib/utils":67,"util":79}],61:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -5796,12 +6477,12 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":67}],61:[function(require,module,exports){
+},{"_process":68}],62:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib/picomatch');
 
-},{"./lib/picomatch":64}],62:[function(require,module,exports){
+},{"./lib/picomatch":65}],63:[function(require,module,exports){
 'use strict';
 
 const path = require('path');
@@ -5982,7 +6663,7 @@ module.exports = {
   }
 };
 
-},{"path":60}],63:[function(require,module,exports){
+},{"path":61}],64:[function(require,module,exports){
 'use strict';
 
 const constants = require('./constants');
@@ -7062,7 +7743,7 @@ parse.fastpaths = (input, options) => {
 
 module.exports = parse;
 
-},{"./constants":62,"./utils":66}],64:[function(require,module,exports){
+},{"./constants":63,"./utils":67}],65:[function(require,module,exports){
 'use strict';
 
 const path = require('path');
@@ -7403,7 +8084,7 @@ picomatch.constants = constants;
 
 module.exports = picomatch;
 
-},{"./constants":62,"./parse":63,"./scan":65,"./utils":66,"path":60}],65:[function(require,module,exports){
+},{"./constants":63,"./parse":64,"./scan":66,"./utils":67,"path":61}],66:[function(require,module,exports){
 'use strict';
 
 const utils = require('./utils');
@@ -7788,7 +8469,7 @@ const scan = (input, options) => {
 
 module.exports = scan;
 
-},{"./constants":62,"./utils":66}],66:[function(require,module,exports){
+},{"./constants":63,"./utils":67}],67:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -7856,7 +8537,7 @@ exports.wrapOutput = (input, state = {}, options = {}) => {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./constants":62,"_process":67,"path":60}],67:[function(require,module,exports){
+},{"./constants":63,"_process":68,"path":61}],68:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -8042,7 +8723,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8114,7 +8795,7 @@ function resolveLocale(locale) {
   }
 }
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8425,7 +9106,7 @@ $.zu = $.am;
 var _default = $;
 exports.default = _default;
 
-},{}],70:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8491,7 +9172,7 @@ function () {
 
 exports.default = PluralRules;
 
-},{"./PluralRuleFunctions":69,"./getPluralRulesLocale":72}],71:[function(require,module,exports){
+},{"./PluralRuleFunctions":70,"./getPluralRulesLocale":73}],72:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8995,7 +9676,7 @@ function parseFormatArgs(args) {
   return [parseNumber(args[0]), parseUnit(args[1])];
 }
 
-},{"./LocaleDataStore":68,"./PluralRules":70,"./resolveLocale":73}],72:[function(require,module,exports){
+},{"./LocaleDataStore":69,"./PluralRules":71,"./resolveLocale":74}],73:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -9045,7 +9726,7 @@ function getLanguageFromLanguageTag(languageTag) {
   return match[1];
 }
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -9124,12 +9805,12 @@ function resolveLocaleLookup(locale) {
   }
 }
 
-},{"./LocaleDataStore":68}],74:[function(require,module,exports){
+},{"./LocaleDataStore":69}],75:[function(require,module,exports){
 'use strict'
 
 exports = module.exports = require('./commonjs/RelativeTimeFormat').default
 exports['default'] = require('./commonjs/RelativeTimeFormat').default
-},{"./commonjs/RelativeTimeFormat":71}],75:[function(require,module,exports){
+},{"./commonjs/RelativeTimeFormat":72}],76:[function(require,module,exports){
 /*!
  * to-regex-range <https://github.com/micromatch/to-regex-range>
  *
@@ -9419,14 +10100,14 @@ toRegexRange.clearCache = () => (toRegexRange.cache = {});
 
 module.exports = toRegexRange;
 
-},{"is-number":24}],76:[function(require,module,exports){
+},{"is-number":25}],77:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 // Currently in sync with Node.js lib/internal/util/types.js
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
@@ -9762,7 +10443,7 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
   });
 });
 
-},{"is-arguments":22,"is-generator-function":23,"is-typed-array":25,"which-typed-array":79}],78:[function(require,module,exports){
+},{"is-arguments":23,"is-generator-function":24,"is-typed-array":26,"which-typed-array":80}],79:[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10481,7 +11162,7 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 }).call(this)}).call(this,require('_process'))
-},{"./support/isBuffer":76,"./support/types":77,"_process":67,"inherits":21}],79:[function(require,module,exports){
+},{"./support/isBuffer":77,"./support/types":78,"_process":68,"inherits":22}],80:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -10540,685 +11221,4 @@ module.exports = function whichTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":1,"call-bind/callBound":9,"es-abstract/helpers/getOwnPropertyDescriptor":11,"foreach":13,"has-tostringtag/shams":19,"is-typed-array":25}],80:[function(require,module,exports){
-const micromatch = require('micromatch');
-
-const TimeAgo = require('javascript-time-ago');
-const en = require('javascript-time-ago/locale/en.json');
-
-TimeAgo.addDefaultLocale(en);
-
-const timeAgo = new TimeAgo('en-US');
-
-const app = new Vue({
-    el: '#app',
-    data: function () {
-        return {
-            serverId: '',
-            serverUrl: '',
-            responseBodyAllowed: false,
-            requests: [],
-            savedResponses: this.readResponsesFromStorage() || [
-                this.createResponseProxy({
-                    id: 0,
-                    name: '200 {}',
-                    statusCode: 200,
-                    urlPattern: '',
-                    json: '{}'
-                }),
-                this.createResponseProxy({
-                    id: 1,
-                    name: '404 {}',
-                    statusCode: 404,
-                    urlPattern: '',
-                    json: '{}'
-                })
-            ],
-            selectedResponseId: 0,
-            blinked: true,
-            responseEditorVisible: false,
-            wsStatus: 'DISCONNECTED',
-            theme: localStorage.getItem('theme') || 'sakura-vader',
-            themes: {
-                'sakura-dark': {
-                    name: 'sakura-dark', label: 'Sakura Dark', stylesheets: [
-                        'https://unpkg.com/sakura.css/css/sakura-dark.css'
-                    ]
-                },
-                'sakura': {
-                    name: 'sakura', label: 'Sakura Light', stylesheets: [
-                        'https://unpkg.com/sakura.css/css/sakura.css'
-                    ]
-                },
-                'sakura-dark-solarized': {
-                    name: 'sakura-dark-solarized', label: 'Sakura Dark Solarized', stylesheets: [
-                        'https://unpkg.com/sakura.css/css/sakura-dark-solarized.css'
-                    ]
-                },
-                'sakura-earthly': {
-                    name: 'sakura-earthly', label: 'Sakura Earthly', stylesheets: [
-                        'https://unpkg.com/sakura.css/css/sakura-earthly.css'
-                    ]
-                },
-                'sakura-ink': {
-                    name: 'sakura-ink', label: 'Sakura Ink', stylesheets: [
-                        'https://unpkg.com/sakura.css/css/sakura-ink.css'
-                    ]
-                },
-                'sakura-vader': {
-                    name: 'sakura-vader', label: 'Sakura Vader', stylesheets: [
-                        'https://unpkg.com/sakura.css/css/sakura-vader.css'
-                    ]
-                },
-                'water': {
-                    name: 'water', label: 'Water', stylesheets: [
-                        'https://cdn.jsdelivr.net/npm/water.css@2/out/water.css'
-                    ]
-                },
-                'water-dark': {
-                    name: 'water-dark', label: 'Water Dark', stylesheets: [
-                        'https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css'
-                    ]
-                },
-                'water-light': {
-                    name: 'water-light', label: 'Water Light', stylesheets: [
-                        'https://cdn.jsdelivr.net/npm/water.css@2/out/light.css'
-                    ]
-                },
-                'tufte': {
-                    name: 'tufte', label: 'Tufte', stylesheets: [
-                        'https://cdnjs.cloudflare.com/ajax/libs/tufte-css/1.7.2/tufte.min.css'
-                    ]
-                },
-                'milligram': {
-                    name: 'milligram', label: 'Milligram', stylesheets: [
-                        'https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic',
-                        'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css',
-                        'https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css'
-                    ]
-                },
-                'mvp': {
-                    name: 'mvp', label: 'MVP', stylesheets: [
-                        'https://unpkg.com/mvp.css'
-                    ]
-                },
-                'picnic': {
-                    name: 'picnic', label: 'Picnic', stylesheets: [
-                        'https://cdn.jsdelivr.net/npm/picnic@6.5.3/picnic.min.css'
-                    ]
-                },
-                'mini': {
-                    name: 'mini', label: 'Mini', stylesheets: [
-                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.css'
-                    ]
-                },
-                'mini-dark': {
-                    name: 'mini-dark', label: 'Mini Dark', stylesheets: [
-                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.css'
-                    ]
-                },
-                'mini-nord': {
-                    name: 'mini-nord', label: 'Mini Nord', stylesheets: [
-                        'https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.css'
-                    ]
-                },
-                'new-css': {
-                    name: 'new-css', label: 'new.css', stylesheets: [
-                        'https://cdn.jsdelivr.net/npm/@exampledev/new.css@1/new.min.css'
-                    ]
-                },
-                'awsm-css': {
-                    name: 'awsm-css', label: 'awsm.css', stylesheets: [
-                        'https://unpkg.com/awsm.css/dist/awsm.min.css'
-                    ]
-                },
-                'marx': {
-                    name: 'marx', label: 'Marx', stylesheets: [
-                        'https://unpkg.com/marx-css/css/marx.min.css'
-                    ]
-                },
-                'wing': {
-                    name: 'wing', label: 'Wing', stylesheets: [
-                        'https://unpkg.com/wingcss'
-                    ]
-                }
-            }
-        }
-    },
-    computed: {
-        awaitingRequests: function () {
-            return this.requests.filter(r => r.status === 'Open');
-        },
-        completedRequests: function () {
-            return this.requests.filter(r => r.status !== 'Open');
-        },
-        biggestResponseId: function () {
-            return this.savedResponses.reduce((accumulator, currentValue) => currentValue.id > accumulator ? currentValue.id : accumulator, 0) || 0;
-        },
-        themeStylesheets: function () {
-            return this.themes[this.theme].stylesheets;
-        }
-    },
-    created() {
-        setInterval(() => {
-            this.blink();
-        }, 500);
-        setInterval(() => {
-            this.refreshTimesAgo();
-        }, 10000);
-    },
-    watch: {
-        theme: function (newVal) {
-            this.theme = newVal;
-            localStorage.setItem('theme', newVal);
-        }
-    },
-    methods: {
-        sendResponse: function (request) {
-            ws.send(JSON.stringify({
-                requestKey: request.requestKey,
-                statusCode: request.responseStatusCode,
-                json: request.responseJson
-            }));
-            request.status = 'ResponseSent';
-            this.saveResponse(request.responseStatusCode, request.responseJson);
-        },
-        setSavedResponse: function (request, selectedResponseId) {
-            const found = this.savedResponses.find(r => r.id == selectedResponseId);
-            if (found) {
-                request.responseStatusCode = found.statusCode;
-                request.responseJson = found.json;
-            }
-            return found;
-        },
-        sendSavedResponse: function (request, selectedResponseId) {
-            this.setSavedResponse(request, selectedResponseId) && this.sendResponse(request);
-        },
-        saveResponse: function (statusCode, json) {
-            try {
-                json = JSON.stringify(JSON.parse(json))
-            } catch { }
-            if (this.savedResponses.some(r => r.statusCode == statusCode && r.json == json)) {
-                return;
-            }
-            const newResp = { id: ++this.biggestResponseId, statusCode: statusCode, json: json, name: this.createResponseName(statusCode, json), urlPattern: '' };
-            this.savedResponses.push(newResp);
-            this.saveStorage();
-        },
-        createResponseName: function (statusCode, json) {
-            return statusCode + ' ' + json.substring(0, 50);
-        },
-        newBlankResponse: function () {
-            const id = ++this.biggestResponseId;
-            const newResp = this.createResponseProxy({ id: id, statusCode: 200, json: '{}', name: 'Response ' + id, urlPattern: '' });
-            this.savedResponses.push(newResp);
-            this.saveStorage();
-            this.selectedResponseId = id;
-        },
-        blink: function () {
-            this.blinked = !this.blinked;
-        },
-        refreshTimesAgo: function () {
-            this.requests.map(request => {
-                request.timeAgo = timeAgo.format(new Date(request.date));
-            });
-        },
-        toggleResponseEditor: function () {
-            this.responseEditorVisible = !this.responseEditorVisible;
-        },
-        readResponsesFromStorage: function () {
-            const fromStorage = localStorage.getItem('savedResponses');
-            return fromStorage ? JSON.parse(fromStorage).map(x => this.createResponseProxy(x)) : null;
-        },
-        saveStorage: function () {
-            localStorage.setItem('savedResponses', JSON.stringify(this.savedResponses));
-        },
-        createResponseProxy: function (response) {
-            const that = this;
-            return new Proxy(response, {
-                set: function (obj, prop, value) {
-                    console.log(obj, prop, value);
-                    if (prop === 'statusCode' || prop === 'json') {
-                        const oldComputedName = that.createResponseName(obj.statusCode, obj.json);
-                        console.log('oldComputedNAme', oldComputedName);
-                        if (obj.name === oldComputedName || obj.name === 'Response ' + obj.id || obj.name === '') {
-                            obj.name = that.createResponseName(prop === 'statusCode' ? value : obj.statusCode, prop === 'json' ? value : obj.json);
-                        }
-                    }
-                    obj[prop] = value;
-                    that.saveStorage();
-                    return true;
-                }
-            });
-        }
-    },
-    template: `
-    <div>
-        <header class="header">
-            <div>
-                <label>Your unique endpoint is</label><input v-model="serverUrl" readonly="true"
-                    onClick="this.select();" style="width: 100%" size="85" />
-            </div>
-            <div>
-                WebSocket status: {{ wsStatus }}
-            </div>
-            <div>
-                Theme
-                <select v-model="theme">
-                    <option v-for="theme in themes" v-bind:value="theme.name">{{ theme.label }}</option>
-                </select>
-            </div>
-        </header>
-        <hr>
-        <div class="app-content">
-            <div class="all-requests">
-                <div class="request-group">
-                    <h4>Awaiting requests</h4>
-                    <div v-if="!awaitingRequests.length">requests made to your endpoint will appear here</div>
-                    <div class="requests">
-                        <div v-for="request in awaitingRequests" class="req">
-                            <hr>
-                            <div v-bind:class="{ blink: blinked, offblink: !blinked }">
-                                <table>
-                                    <tr>
-                                        <th colspan="2">Request</th>
-                                    </tr>
-                                    <tr>
-                                        <td>date</td>
-                                        <td>{{ request.date }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>url</td>
-                                        <td class="url">{{ request.directUrl }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>method</td>
-                                        <td>{{ request.method }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>headers</td>
-                                        <td>
-                                            <textarea readonly="true" v-model="request.headers" rows="3"></textarea>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>body</td>
-                                        <td>
-                                            <textarea readonly="true" v-model="request.body" rows="3"></textarea>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>protocol</td>
-                                        <td>{{ request.protocol }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th colspan="2">Response</th>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            saved response
-                                        </td>
-                                        <td>
-                                            <select v-on:change="setSavedResponse(request, $event.target.value)">
-                                                <option value=""></option>
-                                                <option v-for="response in savedResponses" v-bind:value="response.id">
-                                                    {{ response.name }}</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2">
-                                            <button v-for="response in savedResponses" v-on:click="sendSavedResponse(request, response.id)">
-                                                {{ response.name }}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>response status code</td>
-                                        <td>
-                                            <select v-model="request.responseStatusCode">
-                                                <option value="100">100 Continue</option>
-                                                <option value="101">101 Switching Protocols</option>
-                                                <option value="102">102 Processing</option>
-                                                <option value="200">200 OK</option>
-                                                <option value="201">201 Created</option>
-                                                <option value="202">202 Accepted</option>
-                                                <option value="203">203 Non-authoritative Information</option>
-                                                <option value="204">204 No Content</option>
-                                                <option value="205">205 Reset Content</option>
-                                                <option value="206">206 Partial Content</option>
-                                                <option value="207">207 Multi-Status</option>
-                                                <option value="208">208 Already Reported</option>
-                                                <option value="226">226 IM Used</option>
-                                                <option value="300">300 Multiple Choices</option>
-                                                <option value="301">301 Moved Permanently</option>
-                                                <option value="302">302 Found</option>
-                                                <option value="303">303 See Other</option>
-                                                <option value="304">304 Not Modified</option>
-                                                <option value="305">305 Use Proxy</option>
-                                                <option value="307">307 Temporary Redirect</option>
-                                                <option value="308">308 Permanent Redirect</option>
-                                                <option value="400">400 Bad Request</option>
-                                                <option value="401">401 Unauthorized</option>
-                                                <option value="402">402 Payment Required</option>
-                                                <option value="403">403 Forbidden</option>
-                                                <option value="404">404 Not Found</option>
-                                                <option value="405">405 Method Not Allowed</option>
-                                                <option value="406">406 Not Acceptable</option>
-                                                <option value="407">407 Proxy Authentication Required</option>
-                                                <option value="408">408 Request Timeout</option>
-                                                <option value="409">409 Conflict</option>
-                                                <option value="410">410 Gone</option>
-                                                <option value="411">411 Length Required</option>
-                                                <option value="412">412 Precondition Failed</option>
-                                                <option value="413">413 Payload Too Large</option>
-                                                <option value="414">414 Request-URI Too Long</option>
-                                                <option value="415">415 Unsupported Media Type</option>
-                                                <option value="416">416 Requested Range Not Satisfiable</option>
-                                                <option value="417">417 Expectation Failed</option>
-                                                <option value="418">418 I\'m a teapot</option>
-                                                <option value="421">421 Misdirected Request</option>
-                                                <option value="422">422 Unprocessable Entity</option>
-                                                <option value="423">423 Locked</option>
-                                                <option value="424">424 Failed Dependency</option>
-                                                <option value="426">426 Upgrade Required</option>
-                                                <option value="428">428 Precondition Required</option>
-                                                <option value="429">429 Too Many Requests</option>
-                                                <option value="431">431 Request Header Fields Too Large</option>
-                                                <option value="444">444 Connection Closed Without Response</option>
-                                                <option value="451">451 Unavailable For Legal Reasons</option>
-                                                <option value="499">499 Client Closed Request</option>
-                                                <option value="500">500 Internal Server Error</option>
-                                                <option value="501">501 Not Implemented</option>
-                                                <option value="502">502 Bad Gateway</option>
-                                                <option value="503">503 Service Unavailable</option>
-                                                <option value="504">504 Gateway Timeout</option>
-                                                <option value="505">505 HTTP Version Not Supported</option>
-                                                <option value="506">506 Variant Also Negotiates</option>
-                                                <option value="507">507 Insufficient Storage</option>
-                                                <option value="508">508 Loop Detected</option>
-                                                <option value="510">510 Not Extended</option>
-                                                <option value="511">511 Network Authentication Required</option>
-                                                <option value="599">599 Network Connect Timeout Error</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>response body</td>
-                                        <td>
-                                            <textarea v-if="responseBodyAllowed" v-model="request.responseJson"></textarea>
-                                            <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td></td>
-                                        <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!
-                                        </td>
-                                        <td v-else-if="request.status === 'Closed'">request closed by sender</td>
-                                        <td v-else>
-                                            <button @click="sendResponse(request)">send response</button>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="request-group">
-                    <h4>Completed requests</h4>
-                    <div v-if="!completedRequests.length">(empty)</div>
-                    <div class="requests">
-                        <div v-for="request in completedRequests" class="req">
-                            <hr>
-                            <table class="table">
-                                <tr>
-                                    <th colspan="2">Request</th>
-                                </tr>
-                                <tr>
-                                    <td>date</td>
-                                    <td>{{ request.date }} {{ request.timeAgo }}</td>
-                                </tr>
-                                <tr>
-                                    <td>url</td>
-                                    <td class="url">{{ request.directUrl }}</td>
-                                </tr>
-                                <tr>
-                                    <td>method</td>
-                                    <td>{{ request.method }}</td>
-                                </tr>
-                                <tr>
-                                    <td>headers</td>
-                                    <td>
-                                        <textarea readonly="true" v-model="request.headers" rows="2"></textarea>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>body</td>
-                                    <td>
-                                        <textarea readonly="true" v-model="request.body" rows="2"></textarea>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>protocol</td>
-                                    <td>{{ request.protocol }}</td>
-                                </tr>
-                                <tbody v-if="request.status === 'ResponseSent'">
-                                    <tr>
-                                        <th colspan="2">Response</th>
-                                    </tr>
-                                    <tr>
-                                        <td>response status code</td>
-                                        <td>{{ request.responseStatusCode }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>response body</td>
-                                        <td>
-                                            <textarea readonly="true" v-model="request.responseJson" rows="2"></textarea>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tr>
-                                    <td></td>
-                                    <td v-if="request.status === 'ResponseSent'" class="text-success">response sent!
-                                        <span v-if="request.autoResponseName"> (automatic: {{ request.autoResponseName }})</span>
-                                    </td>
-                                    <td v-else-if="request.status === 'Closed'">request closed by sender</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="response-editor-wrapper">
-                <button class="toggle-editor-btn" @click="toggleResponseEditor()">Response editor</button>
-                <response-editor v-if="responseEditorVisible" v-bind:saved-responses="savedResponses"
-                    v-bind:selected-response-id="selectedResponseId" v-bind:response-body-allowed="responseBodyAllowed"
-                    v-on:newresponse="newBlankResponse()">
-                </response-editor>
-            </div>
-        </div>
-        <link v-for="url in themeStylesheets" v-bind:href="url" rel="stylesheet" type="text/css" />
-    </div>
-    `
-});
-
-Vue.component('response-editor', {
-    data: function () {
-        return {
-            responses: this.savedResponses,
-            selectedRespId: this.selectedResponseId
-        }
-    },
-    computed: {
-        selectedResponse: function () {
-            return this.responses ? this.responses.find(r => r.id === this.selectedRespId) : {}
-        }
-    },
-    watch: {
-        selectedResponseId: function (newVal) {
-            this.selectedRespId = newVal;
-        },
-        selectedResponses: function (newVal) {
-            this.responses = newVal;
-        }
-    },
-    props: ['savedResponses', 'selectedResponseId', 'responseBodyAllowed'],
-    template: `
-        <form class="form">
-            <div class="form-control" style="flex: 1 100%">
-                <label>
-                    saved response
-                </label>
-                    <select v-model="selectedRespId">
-                        <option v-for="response in responses" v-bind:value="response.id">{{ response.name }}</option>
-                    </select>
-                    <button v-on:click="$emit('newresponse'); $event.preventDefault();">New</button>
-            </div>
-            <div class="form-control" v-if="selectedResponse">
-                <label>
-                    name
-                </label>
-                    <input v-model="selectedResponse.name"></input>
-            </div>
-            <div class="form-control" v-if="selectedResponse">
-                <label>
-                    url pattern for auto-response
-                </label>
-                    <input v-model="selectedResponse.urlPattern"></input>
-            </div>
-            <div class="form-control">
-                <label>response status code</label>
-                    <select v-model="selectedResponse.statusCode">
-                        <option value="100">100 Continue</option>
-                        <option value="101">101 Switching Protocols</option>
-                        <option value="102">102 Processing</option>
-                        <option value="200">200 OK</option>
-                        <option value="201">201 Created</option>
-                        <option value="202">202 Accepted</option>
-                        <option value="203">203 Non-authoritative Information</option>
-                        <option value="204">204 No Content</option>
-                        <option value="205">205 Reset Content</option>
-                        <option value="206">206 Partial Content</option>
-                        <option value="207">207 Multi-Status</option>
-                        <option value="208">208 Already Reported</option>
-                        <option value="226">226 IM Used</option>
-                        <option value="300">300 Multiple Choices</option>
-                        <option value="301">301 Moved Permanently</option>
-                        <option value="302">302 Found</option>
-                        <option value="303">303 See Other</option>
-                        <option value="304">304 Not Modified</option>
-                        <option value="305">305 Use Proxy</option>
-                        <option value="307">307 Temporary Redirect</option>
-                        <option value="308">308 Permanent Redirect</option>
-                        <option value="400">400 Bad Request</option>
-                        <option value="401">401 Unauthorized</option>
-                        <option value="402">402 Payment Required</option>
-                        <option value="403">403 Forbidden</option>
-                        <option value="404">404 Not Found</option>
-                        <option value="405">405 Method Not Allowed</option>
-                        <option value="406">406 Not Acceptable</option>
-                        <option value="407">407 Proxy Authentication Required</option>
-                        <option value="408">408 Request Timeout</option>
-                        <option value="409">409 Conflict</option>
-                        <option value="410">410 Gone</option>
-                        <option value="411">411 Length Required</option>
-                        <option value="412">412 Precondition Failed</option>
-                        <option value="413">413 Payload Too Large</option>
-                        <option value="414">414 Request-URI Too Long</option>
-                        <option value="415">415 Unsupported Media Type</option>
-                        <option value="416">416 Requested Range Not Satisfiable</option>
-                        <option value="417">417 Expectation Failed</option>
-                        <option value="418">418 I\'m a teapot</option>
-                        <option value="421">421 Misdirected Request</option>
-                        <option value="422">422 Unprocessable Entity</option>
-                        <option value="423">423 Locked</option>
-                        <option value="424">424 Failed Dependency</option>
-                        <option value="426">426 Upgrade Required</option>
-                        <option value="428">428 Precondition Required</option>
-                        <option value="429">429 Too Many Requests</option>
-                        <option value="431">431 Request Header Fields Too Large</option>
-                        <option value="444">444 Connection Closed Without Response</option>
-                        <option value="451">451 Unavailable For Legal Reasons</option>
-                        <option value="499">499 Client Closed Request</option>
-                        <option value="500">500 Internal Server Error</option>
-                        <option value="501">501 Not Implemented</option>
-                        <option value="502">502 Bad Gateway</option>
-                        <option value="503">503 Service Unavailable</option>
-                        <option value="504">504 Gateway Timeout</option>
-                        <option value="505">505 HTTP Version Not Supported</option>
-                        <option value="506">506 Variant Also Negotiates</option>
-                        <option value="507">507 Insufficient Storage</option>
-                        <option value="508">508 Loop Detected</option>
-                        <option value="510">510 Not Extended</option>
-                        <option value="511">511 Network Authentication Required</option>
-                        <option value="599">599 Network Connect Timeout Error</option>
-                    </select>
-            </div>
-            <div class="form-control">
-                <label>response body</label>
-                <textarea v-if="responseBodyAllowed" v-model="selectedResponse.json"></textarea>
-                <p v-if="!responseBodyAllowed">disabled - can be enabled in self-hosted version!</p>
-            </div>
-        </form>
-    `
-});
-
-let ws = connect();
-
-function connect() {
-    let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
-    ws.onopen = function (event) {
-        app.wsStatus = 'CONNECTED';
-    }
-    ws.onmessage = function (event) {
-        console.log(event);
-        try {
-            const message = JSON.parse(event.data);
-            if (message.requestKey) { // incoming request
-                const request = message;
-                request.timeAgo = timeAgo.format(new Date(request.date));
-                request.headers = JSON.stringify(request.headers, null, 2);
-                try {
-                    request.body = JSON.stringify(request.body, null, 2);
-                } catch { }
-                let found = app.requests.find(r => r.requestKey === request.requestKey);
-                if (found) {
-                    found = Object.assign(found, request);
-                } else {
-                    request.responseStatusCode = 200;
-                    request.responseJson = '{}';
-                    app.requests.unshift(request);
-
-                    const autoResponse = app.savedResponses.find(r => r.urlPattern !== '' && micromatch.isMatch(request.directUrl, r.urlPattern));
-                    if (autoResponse) {
-                        request.responseStatusCode = autoResponse.statusCode;
-                        request.responseJson = autoResponse.json;
-                        request.autoResponseName = autoResponse.name;
-                        app.sendResponse(request);
-                    }
-                }
-            } else if (message.serverId) { // WS initialization
-                app.serverId = message.serverId;
-                app.serverUrl = location.origin + '/' + message.serverId;
-                app.responseBodyAllowed = message.responseBodyAllowed;
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    }
-    ws.onclose = function (event) {
-        app.wsStatus = 'DISCONNECTED';
-        console.log('ws closed', event);
-    }
-    return ws;
-}
-
-setInterval(() => {
-    if (ws.readyState === WebSocket.CLOSED) {
-        app.wsStatus = 'RECONNECTING';
-        console.log('WebSocket closed, reconnecting...');
-        ws = connect();
-    }
-}, 10000);
-},{"javascript-time-ago":57,"javascript-time-ago/locale/en.json":58,"micromatch":59}]},{},[80]);
+},{"available-typed-arrays":2,"call-bind/callBound":10,"es-abstract/helpers/getOwnPropertyDescriptor":12,"foreach":14,"has-tostringtag/shams":20,"is-typed-array":26}]},{},[1]);

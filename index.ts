@@ -1,4 +1,3 @@
-// lib/app.ts
 import express = require('express');
 import WebSocket = require('ws');
 import http = require('http');

@@ -324,7 +324,7 @@ const app = new Vue({
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td colspan="2">
+                                        <td colspan="2" class="quick-responses">
                                             <button v-for="response in savedResponses" v-on:click="sendSavedResponse(request, response.id)">
                                                 {{ response.name }}
                                             </button>
