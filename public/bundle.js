@@ -10818,7 +10818,7 @@ const app = new Vue({
             <div class="all-requests">
                 <div class="request-group">
                     <h4>Awaiting requests</h4>
-                    <div v-if="!awaitingRequests.length">(empty)</div>
+                    <div v-if="!awaitingRequests.length">requests made to your endpoint will appear here</div>
                     <div class="requests">
                         <div v-for="request in awaitingRequests" class="req">
                             <hr>
