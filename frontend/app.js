@@ -530,7 +530,7 @@ const app = new Vue({
                 <button class="toggle-editor-btn" @click="toggleResponseEditor()">Response editor</button>
                 <response-editor v-if="responseEditorVisible" v-bind:saved-responses="savedResponses"
                     v-bind:selected-response-id="selectedResponseId" v-bind:response-body-allowed="responseBodyAllowed"
-                    v-on:newresponse="newBlankResponse()">
+                    v-bind:status-codes="statusCodes" v-on:newresponse="newBlankResponse()">
                 </response-editor>
             </div>
         </div>
