@@ -207,6 +207,11 @@ const app = new Vue({
           label: "Wing",
           stylesheets: ["https://unpkg.com/wingcss"],
         },
+        _98: {
+          name: "_98",
+          label: "98.css",
+          stylesheets: ["https://unpkg.com/98.css"],
+        },
       },
     };
   },
