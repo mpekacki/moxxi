@@ -80,6 +80,8 @@ const app = new Vue({
       serverId: "",
       serverUrl: "",
       responseBodyAllowed: false,
+      passwordRequired: false,
+      password: "",
       requests: [],
       statusCodes: statusCodes,
       savedResponses: this.readResponsesFromStorage() || [
@@ -251,6 +253,7 @@ const app = new Vue({
           requestKey: request.requestKey,
           statusCode: request.responseStatusCode,
           json: request.responseJson,
+          password: this.password
         })
       );
       request.status = "ResponseSent";
@@ -356,6 +359,12 @@ const app = new Vue({
         },
       });
     },
+    removeSavedResponse: function (response) {
+      this.savedResponses = this.savedResponses.filter(
+        (r) => r.id !== response.id
+      );
+      this.saveStorage();
+    }
   },
   template: `
     <div>
@@ -366,6 +375,9 @@ const app = new Vue({
             </div>
             <div>
                 WebSocket status: {{ wsStatus }}
+            </div>
+            <div v-if="passwordRequired">
+                <label>Password</label><input v-model="password" type="password" />
             </div>
             <div>
                 Theme
@@ -572,6 +584,7 @@ Vue.component("response-editor", {
                         <option v-for="response in responses" v-bind:value="response.id">{{ response.name }}</option>
                     </select>
                     <button v-on:click="$emit('newresponse'); $event.preventDefault();">New</button>
+                    <button v-on:click="$emit('deleteresponse'); $event.preventDefault();" v-if="selectedResponse">Delete</button>
             </div>
             <div class="form-control" v-if="selectedResponse">
                 <label>
@@ -648,6 +661,7 @@ function connect() {
         app.serverId = message.serverId;
         app.serverUrl = location.origin + "/" + message.serverId;
         app.responseBodyAllowed = message.responseBodyAllowed;
+        app.passwordRequired = message.passwordRequired;
       }
     } catch (error) {
       console.error(error);

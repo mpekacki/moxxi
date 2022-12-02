@@ -17,6 +17,8 @@ const wss: WebSocket.Server = new WebSocket.Server({ server: server });
 const keys = [process.env.KEY0 || uuidv4(), process.env.KEY1 || uuidv4()];
 
 const responseBodyAllowed = !!process.env.ALLOW_BODY;
+const password = process.env.PASSWORD;
+const passwordRequired = !!password;
 
 app.use(
   cookieSession({
@@ -48,11 +50,13 @@ interface IncomingResponse {
   requestKey: number;
   statusCode: number;
   json: string;
+  password?: string;
 }
 
 interface EndpointData {
   serverId: string;
   responseBodyAllowed: boolean;
+  passwordRequired: boolean;
 }
 
 interface RequestData {
@@ -95,11 +99,24 @@ wss.on("connection", (ws, request) => {
   const endpointData: EndpointData = {
     serverId: serverId,
     responseBodyAllowed: responseBodyAllowed,
+    passwordRequired: passwordRequired,
   };
   ws.send(JSON.stringify(endpointData));
 
   ws.on("message", (message) => {
     const incomingResponse: IncomingResponse = JSON.parse(<string>message);
+    if (passwordRequired) {
+      const failedPasswords = parseInt(process.env.FAILED_PASSWORDS || "0");
+      if (failedPasswords >= 100) {
+        console.log("Too many failed password attempts");
+        return;
+      }
+      if (incomingResponse.password !== password) {
+        console.log("Incorrect password");
+        process.env.FAILED_PASSWORDS = (failedPasswords + 1).toString();
+        return;
+      }
+    }
     if (!(incomingResponse.requestKey in connection.responseMap)) return;
     const res = connection.responseMap[incomingResponse.requestKey];
     if (res.headersSent) return;
@@ -179,7 +196,9 @@ app.all("/:serverId*", (req, res) => {
   req.on("close", () => {
     if (req.aborted) {
       requestData.status = "Closed";
-      connection.websockets.forEach((ws) => ws.send(JSON.stringify(requestData)));
+      connection.websockets.forEach((ws) =>
+        ws.send(JSON.stringify(requestData))
+      );
     }
   });
 });
