@@ -167,7 +167,8 @@ app.get("/", (req, res) => {
 
 app.use("/public", express.static("public"));
 
-app.all("/:serverId*", (req, res) => {
+// external request to unique endpoint
+app.all("/:serverId([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})*", (req, res) => {
   const params: any = req.params;
   const serverId = params.serverId;
   if (!(serverId in socketMap)) return;
