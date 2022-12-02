@@ -168,7 +168,8 @@ app.get("/", (req, res) => {
 app.use("/public", express.static("public"));
 
 app.all("/:serverId*", (req, res) => {
-  const serverId = req.params.serverId;
+  const params: any = req.params;
+  const serverId = params.serverId;
   if (!(serverId in socketMap)) return;
   const connection = socketMap[serverId];
   const requestKey = ++connection.lastRequestKey;
